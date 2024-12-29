@@ -263,73 +263,29 @@ void additionalFunctionsMenu(const std::vector<Playlist>& playlists)
     while (true)
     {
         std::cout << "\n========== Additional Functions ==========\n";
-        std::cout << "1. Calculate Average Popularity\n";
-        std::cout << "2. Find Longest Song in Each Genre\n";
-        std::cout << "3. Calculate Total Streams by Language\n";
+        std::cout << "1. Additional Function Placeholder 1\n";
+        std::cout << "2. Additional Function Placeholder 2\n";
+        std::cout << "3. Additional Function Placeholder 3\n";
         std::cout << "4. Back to Main Menu\n";
         std::cout << "Enter your choice: ";
         int choice;
         std::cin >> choice;
 
-        if (choice == 4) break;
-
         switch (choice)
         {
         case 1:
-            {
-                // Calculate average popularity
-                double totalPopularity = std::accumulate(playlists.begin(), playlists.end(), 0.0,
-                                                         [](double sum, const Playlist& p)
-                                                         {
-                                                             return sum + p.popularity;
-                                                         });
-                double averagePopularity = totalPopularity / playlists.size();
-                std::cout << "\nAverage popularity: " << averagePopularity << '\n';
-                break;
-            }
-
         case 2:
-            {
-                // Find longest song in each genre
-                std::map<std::string, Playlist> longestSongs;
-                for (const auto& p : playlists)
-                {
-                    if (longestSongs.find(p.genre) == longestSongs.end() || p.duration > longestSongs[p.genre].duration)
-                    {
-                        longestSongs[p.genre] = p;
-                    }
-                }
-                std::cout << "\nLongest song in each genre:\n";
-                for (const auto& [genre, song] : longestSongs)
-                {
-                    std::cout << genre << ": " << song.song_title << " (" << song.duration << " seconds)\n";
-                }
-                break;
-            }
-
         case 3:
-            {
-                // Calculate total streams by language
-                std::map<std::string, int> streamsByLanguage;
-                for (const auto& p : playlists)
-                {
-                    streamsByLanguage[p.language] += p.stream;
-                }
-                std::cout << "\nTotal streams by language:\n";
-                for (const auto& [language, streams] : streamsByLanguage)
-                {
-                    std::cout << language << ": " << streams << " streams\n";
-                }
-                break;
-            }
-
+            std::cout << "\nThis feature is a placeholder for later functionality.\n";
+            break;
+        case 4:
+            return; // Exit Additional Functions Menu
         default:
             std::cout << "Invalid choice. Please try again.\n";
             break;
         }
     }
 }
-
 int main()
 {
     std::string filename =
