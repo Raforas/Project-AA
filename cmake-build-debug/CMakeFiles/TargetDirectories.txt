@@ -1,3 +1,3 @@
-D:/User/Documents/Programming/Dev C++/C++ Exercises/Project-AA/cmake-build-debug/CMakeFiles/Project_AA.dir
-D:/User/Documents/Programming/Dev C++/C++ Exercises/Project-AA/cmake-build-debug/CMakeFiles/edit_cache.dir
-D:/User/Documents/Programming/Dev C++/C++ Exercises/Project-AA/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+D:/Documents/Utem's Works/#Year2Sem1/BITP2113 ALGORITHM ANALYSIS/Project AA/cmake-build-debug/CMakeFiles/Project_AA.dir
+D:/Documents/Utem's Works/#Year2Sem1/BITP2113 ALGORITHM ANALYSIS/Project AA/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/Documents/Utem's Works/#Year2Sem1/BITP2113 ALGORITHM ANALYSIS/Project AA/cmake-build-debug/CMakeFiles/rebuild_cache.dir
