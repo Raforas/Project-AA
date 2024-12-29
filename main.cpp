@@ -289,7 +289,7 @@ void additionalFunctionsMenu(const std::vector<Playlist>& playlists)
 int main()
 {
     std::string filename =
-        "D:/Documents/Utem's Works/#Year2Sem1/BITP2113 ALGORITHM ANALYSIS/Project AA/spotify_songs_dataset_unsorted.csv";
+        "../spotify_songs_dataset_unsorted.csv";
     // Path to your playlist dataset
     std::vector<Playlist> playlists = readCsv(filename);
 
