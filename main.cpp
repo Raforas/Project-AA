@@ -11,7 +11,6 @@
 #include <numeric> // for std::accumulate
 #include <limits>  // for input validation
 #include <vector>
-
 // Defining a struct to store the playlist data
 
 struct Playlist
