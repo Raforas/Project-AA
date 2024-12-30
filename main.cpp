@@ -149,6 +149,17 @@ void searchMenu(const vector<Playlist>& playlists) {
     }
 }
 
+
+// Helper function to extract the numeric part of song_id
+int extractSongIdNumber(const string& song_id) {
+    size_t pos = 0;
+    while (pos < song_id.size() && !isdigit(song_id[pos])) {
+        ++pos;
+    }
+    return (pos < song_id.size()) ? stoi(song_id.substr(pos)) : 0;
+}
+
+
 // Merge Sort Function for Playlist Sorting
 void merge(vector<Playlist>& playlists, int left, int mid, int right, auto comparator) {
     int n1 = mid - left + 1;
@@ -204,6 +215,8 @@ void mergeSort(vector<Playlist>& playlists, int left, int right, auto comparator
         merge(playlists, left, mid, right, comparator);
     }
 }
+
+
 
 void sortMenu(vector<Playlist>& playlists) {
     while (true) {
@@ -264,7 +277,9 @@ void sortMenu(vector<Playlist>& playlists) {
         // Step 4: Define comparator
         auto comparator = [&](const Playlist& a, const Playlist& b) {
             switch (columnChoice){
-                case 1: return ascending ? a.song_id < b.song_id : a.song_id > b.song_id;
+            case 1:
+                return ascending ? extractSongIdNumber(a.song_id) < extractSongIdNumber(b.song_id)
+                                 : extractSongIdNumber(a.song_id) > extractSongIdNumber(b.song_id);
                 case 2: return ascending ? a.song_title < b.song_title : a.song_title > b.song_title;
                 case 3: return ascending ? a.artist < b.artist : a.artist > b.artist;
                 case 4: return ascending ? a.album < b.album : a.album > b.album;
@@ -322,7 +337,7 @@ void additionalFunctionsMenu(const vector<Playlist>& playlists){
 
 int main() {
     string filename =
-        "../spotify_songs_dataset_unsorted.csv";
+        "../spotify_songs_dataset_sorted.csv";
     // Path to your playlist dataset
     vector<Playlist> playlists = readCsv(filename);
 
