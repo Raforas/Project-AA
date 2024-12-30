@@ -25,7 +25,7 @@ struct Playlist {
     int popularity;
     int stream;
     string language;
-    string explicit_content; // "Yes" or "No"
+
 };
 
 // Function to read the CSV file and store the data into a vector of Playlist structures
@@ -60,7 +60,7 @@ vector<Playlist> readCsv(const string& filename) {
         getline(ss, value, ','); // Stream
         playlist.stream = stoi(value); // Convert string to int
         getline(ss, playlist.language, ',');
-        getline(ss, playlist.explicit_content, ',');
+
 
         // Append the data to the vector
         playlists.push_back(playlist);
@@ -103,9 +103,8 @@ void displayPlaylists(const vector<Playlist>& playlists, int limit = 100) {
         << setw(10) << "Duration"
         << setw(15) << "Popularity"
         << setw(10) << "Stream"
-        << setw(10) << "Language"
-        << setw(10) << "Explicit" << endl;
-    cout << string(180, '-') << endl;
+        << setw(10) << "Language" << endl;
+    cout << string(145, '-') << endl;
 
     for (size_t i = 0; i < playlists.size() && i < limit; ++i) {
         const auto& p = playlists[i];
@@ -118,8 +117,7 @@ void displayPlaylists(const vector<Playlist>& playlists, int limit = 100) {
             << setw(10) << p.duration
             << setw(15) << p.popularity
             << setw(10) << p.stream
-            << setw(10) << p.language
-            << setw(10) << p.explicit_content << endl;
+            << setw(10) << p.language << endl;
     }
 }
 
@@ -151,6 +149,61 @@ void searchMenu(const vector<Playlist>& playlists) {
     }
 }
 
+// Merge Sort Function for Playlist Sorting
+void merge(vector<Playlist>& playlists, int left, int mid, int right, auto comparator) {
+    int n1 = mid - left + 1;
+    int n2 = right - mid;
+
+    // Temporary vectors for left and right subarrays
+    vector<Playlist> leftArray(n1);
+    vector<Playlist> rightArray(n2);
+
+    // Copy data to temporary subarrays
+    for (int i = 0; i < n1; i++)
+        leftArray[i] = playlists[left + i];
+    for (int j = 0; j < n2; j++)
+        rightArray[j] = playlists[mid + 1 + j];
+
+    // Merge the temporary arrays back into playlists
+    int i = 0, j = 0, k = left;
+    while (i < n1 && j < n2) {
+        if (comparator(leftArray[i], rightArray[j])) {
+            playlists[k] = leftArray[i];
+            i++;
+        } else {
+            playlists[k] = rightArray[j];
+            j++;
+        }
+        k++;
+    }
+
+    // Copy the remaining elements of leftArray (if any)
+    while (i < n1) {
+        playlists[k] = leftArray[i];
+        i++;
+        k++;
+    }
+
+    // Copy the remaining elements of rightArray (if any)
+    while (j < n2) {
+        playlists[k] = rightArray[j];
+        j++;
+        k++;
+    }
+}
+
+void mergeSort(vector<Playlist>& playlists, int left, int right, auto comparator) {
+    if (left < right) {
+        int mid = left + (right - left) / 2;
+
+        // Recursively sort first and second halves
+        mergeSort(playlists, left, mid, comparator);
+        mergeSort(playlists, mid + 1, right, comparator);
+
+        // Merge the sorted halves
+        merge(playlists, left, mid, right, comparator);
+    }
+}
 
 void sortMenu(vector<Playlist>& playlists) {
     while (true) {
@@ -226,11 +279,14 @@ void sortMenu(vector<Playlist>& playlists) {
         };
 
         // Step 5: Execute sorting algorithm
-        if (algoChoice == 1){
+        if (algoChoice == 1) {
             // Merge Sort
+            mergeSort(playlists, 0, playlists.size() - 1, comparator);
         } else if (algoChoice == 2) {
-            // Quick Sort
+            // Placeholder for Quick Sort (if implemented)
+            cout << "Quick Sort is currently not implemented.\n";
         }
+
 
         // Step 6: Display sorted results
         cout << "\nPlaylists sorted successfully:\n";
