@@ -3,18 +3,21 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <vector>
-#include <map>
 #include <iomanip>
 #include <algorithm>
+#include <chrono>
+#include <functional> // for std::function
 
-#include <numeric> // for accumulate
-#include <limits>  // for input validation
-#include <vector>
+
 // Defining a struct to store the playlist data
 using namespace std;
 
-struct Playlist {
+
+long long globalSwapCount = 0; // Global counter to track swaps during sorting
+double globalSortTime = 0.0;  // Global variable to track sorting duration
+
+struct Playlist
+{
     string song_id;
     string song_title;
     string artist;
@@ -25,24 +28,37 @@ struct Playlist {
     int popularity;
     int stream;
     string language;
-
 };
 
-// Function to read the CSV file and store the data into a vector of Playlist structures
-vector<Playlist> readCsv(const string& filename) {
-    vector<Playlist> playlists;
+struct Node
+{
+    Playlist data;
+    Node* next;
+
+    Node(const Playlist& playlist) : data(playlist), next(nullptr)
+    {
+    }
+};
+
+Node* readCsv(const string& filename)
+{
+    Node* head = nullptr; // Linked list head
+    Node* tail = nullptr; // Pointer to track the end
+
     ifstream file(filename); // Open CSV file
-    if (!file.is_open()) {
+    if (!file.is_open())
+    {
         cerr << "Error: Could not open the file " << filename << endl;
-        return playlists;
+        return nullptr;
     }
 
     string line;
     // Reading the header (first line)
     getline(file, line);
 
-    // Reading each row from the csv
-    while (getline(file, line)) {
+    // Reading data rows from the CSV
+    while (getline(file, line))
+    {
         stringstream ss(line);
         Playlist playlist;
         string value;
@@ -61,28 +77,42 @@ vector<Playlist> readCsv(const string& filename) {
         playlist.stream = stoi(value); // Convert string to int
         getline(ss, playlist.language, ',');
 
+        // Create a new node for the playlist
+        Node* newNode = new Node(playlist);
 
-        // Append the data to the vector
-        playlists.push_back(playlist);
+        // Append node to the linked list
+        if (!head)
+        {
+            head = newNode;
+            tail = newNode;
+        }
+        else
+        {
+            tail->next = newNode;
+            tail = newNode;
+        }
     }
 
     file.close();
-    return playlists;
+    return head; // Return head of the linked list
 }
 
 // Function prototypes
-void sortMenu(vector<Playlist>& playlists);
-void additionalFunctionsMenu(const vector<Playlist>& playlists);
 
-string truncateText(const string& text, size_t maxLength = 12) {
-    if (text.length() > maxLength) {
+void additionalFunctionsMenu();
+
+string truncateText(const string& text, size_t maxLength = 12)
+{
+    if (text.length() > maxLength)
+    {
         return text.substr(0, maxLength) + "..";
     }
     return text;
 }
 
 
-void displayMenu() {
+void displayMenu()
+{
     cout << "\n========== Spotify Playlist Manager ==========\n";
     cout << "1. Display Playlists (first 100 entries)\n";
     cout << "2. Sort Playlists\n";
@@ -92,8 +122,8 @@ void displayMenu() {
     cout << "Enter your choice: ";
 }
 
-// Function to display the playlists (re-used from main code)
-void displayPlaylists(const vector<Playlist>& playlists, int limit = 100) {
+void displayPlaylists(Node* head, int limit = 100)
+{
     cout << setw(10) << "Song ID"
         << setw(20) << "Title"
         << setw(20) << "Artist"
@@ -106,8 +136,12 @@ void displayPlaylists(const vector<Playlist>& playlists, int limit = 100) {
         << setw(10) << "Language" << endl;
     cout << string(145, '-') << endl;
 
-    for (size_t i = 0; i < playlists.size() && i < limit; ++i) {
-        const auto& p = playlists[i];
+    Node* current = head;
+    int count = 0;
+
+    while (current && count < limit)
+    {
+        const auto& p = current->data;
         cout << setw(10) << p.song_id
             << setw(20) << truncateText(p.song_title)
             << setw(20) << truncateText(p.artist)
@@ -118,13 +152,18 @@ void displayPlaylists(const vector<Playlist>& playlists, int limit = 100) {
             << setw(15) << p.popularity
             << setw(10) << p.stream
             << setw(10) << p.language << endl;
+
+        current = current->next;
+        ++count;
     }
 }
 
 // Placeholder for Search Menu
 // Man ni aku letak view aku je ni, nanti kalau kau nk ubah pape tukar je kat sini <<<< Rafeeq
-void searchMenu(const vector<Playlist>& playlists) {
-    while (true) {
+void searchMenu()
+{
+    while (true)
+    {
         cout << "\n========== Search Menu ==========\n";
         cout << "1. Search by Song Title\n";
         cout << "2. Search by Artist\n";
@@ -134,7 +173,8 @@ void searchMenu(const vector<Playlist>& playlists) {
         int choice;
         cin >> choice;
 
-        switch (choice) {
+        switch (choice)
+        {
         case 1:
         case 2:
         case 3:
@@ -151,75 +191,78 @@ void searchMenu(const vector<Playlist>& playlists) {
 
 
 // Helper function to extract the numeric part of song_id
-int extractSongIdNumber(const string& song_id) {
+int extractSongIdNumber(const string& song_id)
+{
     size_t pos = 0;
-    while (pos < song_id.size() && !isdigit(song_id[pos])) {
+    while (pos < song_id.size() && !isdigit(song_id[pos]))
+    {
         ++pos;
     }
     return (pos < song_id.size()) ? stoi(song_id.substr(pos)) : 0;
 }
 
+Node* merge(Node* left, Node* right, auto comparator, long long& swapCount) {
+    if (!left) return right;
+    if (!right) return left;
 
-// Merge Sort Function for Playlist Sorting
-void merge(vector<Playlist>& playlists, int left, int mid, int right, auto comparator) {
-    int n1 = mid - left + 1;
-    int n2 = right - mid;
+    Node* result = nullptr;
 
-    // Temporary vectors for left and right subarrays
-    vector<Playlist> leftArray(n1);
-    vector<Playlist> rightArray(n2);
+    if (comparator(left->data, right->data)) {
+        result = left;
+        result->next = merge(left->next, right, comparator, swapCount);
+    } else {
+        result = right;
+        result->next = merge(left, right->next, comparator, swapCount);
+        swapCount++; // Increment swap count when nodes are "moved" or re-ordered
+    }
 
-    // Copy data to temporary subarrays
-    for (int i = 0; i < n1; i++)
-        leftArray[i] = playlists[left + i];
-    for (int j = 0; j < n2; j++)
-        rightArray[j] = playlists[mid + 1 + j];
+    return result;
+}
 
-    // Merge the temporary arrays back into playlists
-    int i = 0, j = 0, k = left;
-    while (i < n1 && j < n2) {
-        if (comparator(leftArray[i], rightArray[j])) {
-            playlists[k] = leftArray[i];
-            i++;
-        } else {
-            playlists[k] = rightArray[j];
-            j++;
+void split(Node* source, Node** front, Node** back)
+{
+    Node* slow = source;
+    Node* fast = source->next;
+
+    // Advance fast two nodes, slow one node
+    while (fast)
+    {
+        fast = fast->next;
+        if (fast)
+        {
+            slow = slow->next;
+            fast = fast->next;
         }
-        k++;
     }
 
-    // Copy the remaining elements of leftArray (if any)
-    while (i < n1) {
-        playlists[k] = leftArray[i];
-        i++;
-        k++;
-    }
-
-    // Copy the remaining elements of rightArray (if any)
-    while (j < n2) {
-        playlists[k] = rightArray[j];
-        j++;
-        k++;
-    }
+    // Split the linked list
+    *front = source;
+    *back = slow->next;
+    slow->next = nullptr;
 }
 
-void mergeSort(vector<Playlist>& playlists, int left, int right, auto comparator) {
-    if (left < right) {
-        int mid = left + (right - left) / 2;
+Node* mergeSort(Node* head, auto comparator, long long& swapCount) {
+    if (!head || !head->next)
+        return head;
 
-        // Recursively sort first and second halves
-        mergeSort(playlists, left, mid, comparator);
-        mergeSort(playlists, mid + 1, right, comparator);
+    Node* front = nullptr;
+    Node* back = nullptr;
 
-        // Merge the sorted halves
-        merge(playlists, left, mid, right, comparator);
-    }
+    // Split the list into two halves
+    split(head, &front, &back);
+
+    // Recursively sort the two halves
+    front = mergeSort(front, comparator, swapCount);
+    back = mergeSort(back, comparator, swapCount);
+
+    // Merge the two sorted halves and count swaps
+    return merge(front, back, comparator, swapCount);
 }
 
-
-
-void sortMenu(vector<Playlist>& playlists) {
-    while (true) {
+void sortMenu(Node*& head)
+{
+    while (true)
+    {
         cout << "\n========== Sorting Menu ==========\n";
 
         // Step 1: Choose Column
@@ -242,7 +285,8 @@ void sortMenu(vector<Playlist>& playlists) {
         if (columnChoice == 11) break; // Exit sorting menu if "Back" is chosen.
 
         // Validate columnChoice
-        if (columnChoice < 1 || columnChoice > 10){
+        if (columnChoice < 1 || columnChoice > 10)
+        {
             cout << "Invalid column choice. Please try again.\n";
             continue;
         }
@@ -255,7 +299,8 @@ void sortMenu(vector<Playlist>& playlists) {
         int algoChoice;
         cin >> algoChoice;
 
-        if (algoChoice < 1 || algoChoice > 2){
+        if (algoChoice < 1 || algoChoice > 2)
+        {
             cout << "Invalid algorithm choice. Please try again.\n";
             continue;
         }
@@ -269,48 +314,75 @@ void sortMenu(vector<Playlist>& playlists) {
         cin >> orderChoice;
 
         bool ascending = (orderChoice == 1);
-        if (orderChoice < 1 || orderChoice > 2){
+        if (orderChoice < 1 || orderChoice > 2)
+        {
             cout << "Invalid sort order choice. Please try again.\n";
             continue;
         }
 
         // Step 4: Define comparator
-        auto comparator = [&](const Playlist& a, const Playlist& b) {
-            switch (columnChoice){
+        auto comparator = [&](const Playlist& a, const Playlist& b)
+        {
+            switch (columnChoice)
+            {
             case 1:
-                return ascending ? extractSongIdNumber(a.song_id) < extractSongIdNumber(b.song_id)
-                                 : extractSongIdNumber(a.song_id) > extractSongIdNumber(b.song_id);
-                case 2: return ascending ? a.song_title < b.song_title : a.song_title > b.song_title;
-                case 3: return ascending ? a.artist < b.artist : a.artist > b.artist;
-                case 4: return ascending ? a.album < b.album : a.album > b.album;
-                case 5: return ascending ? a.genre < b.genre : a.genre > b.genre;
-                case 6: return ascending ? a.release_date < b.release_date : a.release_date > b.release_date;
-                case 7: return ascending ? a.duration < b.duration : a.duration > b.duration;
-                case 8: return ascending ? a.popularity < b.popularity : a.popularity > b.popularity;
-                case 9: return ascending ? a.stream < b.stream : a.stream > b.stream;
-                case 10: return ascending ? a.language < b.language : a.language > b.language;
-                default: return true;
+                return ascending
+                           ? extractSongIdNumber(a.song_id) < extractSongIdNumber(b.song_id)
+                           : extractSongIdNumber(a.song_id) > extractSongIdNumber(b.song_id);
+            case 2: return ascending ? a.song_title < b.song_title : a.song_title > b.song_title;
+            case 3: return ascending ? a.artist < b.artist : a.artist > b.artist;
+            case 4: return ascending ? a.album < b.album : a.album > b.album;
+            case 5: return ascending ? a.genre < b.genre : a.genre > b.genre;
+            case 6: return ascending ? a.release_date < b.release_date : a.release_date > b.release_date;
+            case 7: return ascending ? a.duration < b.duration : a.duration > b.duration;
+            case 8: return ascending ? a.popularity < b.popularity : a.popularity > b.popularity;
+            case 9: return ascending ? a.stream < b.stream : a.stream > b.stream;
+            case 10: return ascending ? a.language < b.language : a.language > b.language;
+            default: return true;
             }
         };
 
-        // Step 5: Execute sorting algorithm
-        if (algoChoice == 1) {
-            // Merge Sort
-            mergeSort(playlists, 0, playlists.size() - 1, comparator);
-        } else if (algoChoice == 2) {
+        // Merge Sort
+        // Step 4: Sorting process (measure time and swaps)
+        long long swapCount = 0;                            // Initialize swap counter
+        auto start = chrono::high_resolution_clock::now();  // Start timing
+
+        if (algoChoice == 1)
+        {
+            head = mergeSort(head, comparator, swapCount); // Perform merge sort
+        }
+        else if (algoChoice == 2)
+        {
             // Placeholder for Quick Sort (if implemented)
             cout << "Quick Sort is currently not implemented.\n";
+            continue;
         }
 
+        auto end = chrono::high_resolution_clock::now(); // End timing
+        chrono::duration<double> elapsed = end - start;  // Calculate elapsed time
 
-        // Step 6: Display sorted results
+        // Record global variables for later analysis
+        globalSwapCount = swapCount;
+        globalSortTime = elapsed.count();
+
+        // Step 5: Display sorted results and metrics
         cout << "\nPlaylists sorted successfully:\n";
-        displayPlaylists(playlists);
+        displayPlaylists(head);
+
+        cout << "\n========== SORTING RESULTS ==========\n";
+        cout << "Total Swaps: " << globalSwapCount << endl;
+        cout << "Elapsed Time: " << globalSortTime << " seconds\n";
+        cout << "=====================================\n";
     }
 }
 
-void additionalFunctionsMenu(const vector<Playlist>& playlists){
-    while (true) {
+
+
+
+void additionalFunctionsMenu()
+{
+    while (true)
+    {
         cout << "\n========== Additional Functions ==========\n";
         cout << "1. Additional Function Placeholder 1\n";
         cout << "2. Additional Function Placeholder 2\n";
@@ -320,7 +392,8 @@ void additionalFunctionsMenu(const vector<Playlist>& playlists){
         int choice;
         cin >> choice;
 
-        switch (choice) {
+        switch (choice)
+        {
         case 1:
         case 2:
         case 3:
@@ -335,42 +408,36 @@ void additionalFunctionsMenu(const vector<Playlist>& playlists){
     }
 }
 
-int main() {
-    string filename =
-        "../spotify_songs_dataset_sorted.csv";
-    // Path to your playlist dataset
-    vector<Playlist> playlists = readCsv(filename);
+int main()
+{
+    string filename = "../spotify_songs_dataset_unsorted.csv"; // Path to dataset
+    Node* head = readCsv(filename);
 
-    if (playlists.empty()) {
+    if (!head)
+    {
         cout << "Error: No playlist data loaded. Exiting program.\n";
         return 1;
     }
 
-    while (true){
+    while (true)
+    {
         displayMenu();
         int choice;
         cin >> choice;
 
-        if (!cin){
-            // Check for invalid input
-            cin.clear(); // Clear error flag
-            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore invalid input
-            cout << "Invalid input. Please enter a number.\n";
-            continue;
-        }
-
-        switch (choice){
+        switch (choice)
+        {
         case 1:
-            displayPlaylists(playlists);
+            displayPlaylists(head);
             break;
         case 2:
-            sortMenu(playlists);
+            sortMenu(head);
             break;
         case 3:
-            searchMenu(playlists); // New Search Menu
+            cout << "Search functionality placeholder.\n";
             break;
         case 4:
-            additionalFunctionsMenu(playlists);
+            cout << "Additional functionality placeholder.\n";
             break;
         case 5:
             cout << "Exiting program. Goodbye!\n";
