@@ -5,7 +5,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <chrono>
-#include <functional> // for std::function
+#include <functional> // for function
+#include <utility>
 using namespace std;
 
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
@@ -28,7 +29,7 @@ struct Node {
     Playlist data;
     Node* next;
 
-    explicit Node(const Playlist& playlist) : data(playlist), next(nullptr){}
+    explicit Node(Playlist  playlist) : data(move(playlist)), next(nullptr){}
 };
 
 Node* readCsv(const string& filename){
@@ -78,7 +79,7 @@ Node* readCsv(const string& filename){
     return head;
 }
 
-string truncateText(const string& text, size_t maxLength = 12){
+string truncateText(const string& text, const size_t maxLength = 100){
     if (text.length() > maxLength){
         return text.substr(0, maxLength) + "..";
     }
@@ -86,27 +87,28 @@ string truncateText(const string& text, size_t maxLength = 12){
 }
 
 void displayPlaylists(Node* head, int limit = 100){
-    cout << setw(10) << "Song ID"
-        << setw(20) << "Title"
-        << setw(20) << "Artist"
-        << setw(20) << "Album"
+    cout << left
+        << setw(10) << "Song ID"
+        << setw(40) << "Title"
+        << setw(30) << "Artist"
+        << setw(30) << "Album"
         << setw(15) << "Genre"
         << setw(15) << "Release Date"
         << setw(10) << "Duration"
         << setw(15) << "Popularity"
         << setw(10) << "Stream"
         << setw(10) << "Language" << endl;
-    cout << string(145, '-') << endl;
+    cout << string(185, '-') << endl;
 
-    Node* current = head;
+    const Node* current = head;
     int count = 0;
 
     while (current && count < limit){
         const auto& p = current->data;
         cout << setw(10) << p.song_id
-            << setw(20) << truncateText(p.song_title)
-            << setw(20) << truncateText(p.artist)
-            << setw(20) << truncateText(p.album)
+            << setw(40) << truncateText(p.song_title)
+            << setw(30) << truncateText(p.artist)
+            << setw(30) << truncateText(p.album)
             << setw(15) << truncateText(p.genre)
             << setw(15) << p.release_date
             << setw(10) << p.duration
@@ -161,7 +163,7 @@ Node* merge(Node* left, Node* right, auto comparator, long long& swapCount){
 
 void split(Node* source, Node** front, Node** back){
     Node* slow = source;
-    Node* fast = source->next;
+    const Node* fast = source->next;
 
     while (fast){
         fast = fast->next;
