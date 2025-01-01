@@ -6,44 +6,37 @@
 #include <algorithm>
 #include <chrono>
 #include <functional> // for std::function
-
 using namespace std;
 
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
 double globalSortTime = 0.0; // Global variable to track sorting duration
 
-struct Playlist
-{
+struct Playlist {
     string song_id;
     string song_title;
     string artist;
     string album;
     string genre;
     string release_date; // Use strings for simplicity in parsing dates
-    int duration;
-    int popularity;
-    int stream;
+    int duration{};
+    int popularity{};
+    int stream{};
     string language;
 };
 
-struct Node
-{
+struct Node {
     Playlist data;
     Node* next;
 
-    Node(const Playlist& playlist) : data(playlist), next(nullptr)
-    {
-    }
+    explicit Node(const Playlist& playlist) : data(playlist), next(nullptr){}
 };
 
-Node* readCsv(const string& filename)
-{
+Node* readCsv(const string& filename){
     Node* head = nullptr; // Linked list head
     Node* tail = nullptr; // Pointer to track the end
 
     ifstream file(filename);
-    if (!file.is_open())
-    {
+    if (!file.is_open()){
         cerr << "Error: Could not open the file " << filename << endl;
         return nullptr;
     }
@@ -51,8 +44,7 @@ Node* readCsv(const string& filename)
     string line;
     getline(file, line); // Skip header
 
-    while (getline(file, line))
-    {
+    while (getline(file, line)){
         stringstream ss(line);
         Playlist playlist;
         string value;
@@ -73,13 +65,10 @@ Node* readCsv(const string& filename)
 
         Node* newNode = new Node(playlist);
 
-        if (!head)
-        {
+        if (!head){
             head = newNode;
             tail = newNode;
-        }
-        else
-        {
+        } else {
             tail->next = newNode;
             tail = newNode;
         }
@@ -89,17 +78,14 @@ Node* readCsv(const string& filename)
     return head;
 }
 
-string truncateText(const string& text, size_t maxLength = 12)
-{
-    if (text.length() > maxLength)
-    {
+string truncateText(const string& text, size_t maxLength = 12){
+    if (text.length() > maxLength){
         return text.substr(0, maxLength) + "..";
     }
     return text;
 }
 
-void displayPlaylists(Node* head, int limit = 100)
-{
+void displayPlaylists(Node* head, int limit = 100){
     cout << setw(10) << "Song ID"
         << setw(20) << "Title"
         << setw(20) << "Artist"
@@ -115,8 +101,7 @@ void displayPlaylists(Node* head, int limit = 100)
     Node* current = head;
     int count = 0;
 
-    while (current && count < limit)
-    {
+    while (current && count < limit){
         const auto& p = current->data;
         cout << setw(10) << p.song_id
             << setw(20) << truncateText(p.song_title)
@@ -135,8 +120,7 @@ void displayPlaylists(Node* head, int limit = 100)
 }
 
 // Helper function to display sorting results
-void displaySortingResults(const string& algorithmName, const string& sortOrder, const string& sortBy)
-{
+void displaySortingResults(const string& algorithmName, const string& sortOrder, const string& sortBy){
     cout << "\n========== SORTING RESULTS ==========\n";
     cout << "Algorithm    : " << algorithmName << endl;
     cout << "Order        : " << sortOrder << endl;
@@ -148,31 +132,25 @@ void displaySortingResults(const string& algorithmName, const string& sortOrder,
 }
 
 // Helper function to extract the numeric part of song_id
-int extractSongIdNumber(const string& song_id)
-{
+int extractSongIdNumber(const string& song_id){
     size_t pos = 0;
-    while (pos < song_id.size() && !isdigit(song_id[pos]))
-    {
+    while (pos < song_id.size() && !isdigit(song_id[pos])){
         ++pos;
     }
     return (pos < song_id.size()) ? stoi(song_id.substr(pos)) : 0;
 }
 
 // Merge Sort Implementation
-Node* merge(Node* left, Node* right, auto comparator, long long& swapCount)
-{
+Node* merge(Node* left, Node* right, auto comparator, long long& swapCount){
     if (!left) return right;
     if (!right) return left;
 
     Node* result = nullptr;
 
-    if (comparator(left->data, right->data))
-    {
+    if (comparator(left->data, right->data)){
         result = left;
         result->next = merge(left->next, right, comparator, swapCount);
-    }
-    else
-    {
+    } else {
         result = right;
         result->next = merge(left, right->next, comparator, swapCount);
         swapCount++;
@@ -181,16 +159,13 @@ Node* merge(Node* left, Node* right, auto comparator, long long& swapCount)
     return result;
 }
 
-void split(Node* source, Node** front, Node** back)
-{
+void split(Node* source, Node** front, Node** back){
     Node* slow = source;
     Node* fast = source->next;
 
-    while (fast)
-    {
+    while (fast){
         fast = fast->next;
-        if (fast)
-        {
+        if (fast){
             slow = slow->next;
             fast = fast->next;
         }
@@ -201,8 +176,7 @@ void split(Node* source, Node** front, Node** back)
     slow->next = nullptr;
 }
 
-Node* mergeSort(Node* head, auto comparator, long long& swapCount)
-{
+Node* mergeSort(Node* head, auto comparator, long long& swapCount){
     if (!head || !head->next)
         return head;
 
@@ -218,8 +192,7 @@ Node* mergeSort(Node* head, auto comparator, long long& swapCount)
 }
 
 // Quick Sort Implementation
-Node* getTail(Node* cur)
-{
+Node* getTail(Node* cur){
     while (cur != nullptr && cur->next != nullptr)
     {
         cur = cur->next;
@@ -227,28 +200,21 @@ Node* getTail(Node* cur)
     return cur;
 }
 
-Node* partition(Node* head, Node* end, Node** newHead, Node** newEnd, auto comparator, long long& swapCount)
-{
+Node* partition(Node* head, Node* end, Node** newHead, Node** newEnd, auto comparator, long long& swapCount){
     Node* pivot = end;
     Node *prev = nullptr, *cur = head, *tail = pivot;
 
     *newHead = nullptr;
 
-    while (cur != pivot)
-    {
-        if (comparator(cur->data, pivot->data))
-        {
-            if (!*newHead)
-            {
+    while (cur != pivot){
+        if (comparator(cur->data, pivot->data)){
+            if (!*newHead){
                 *newHead = cur;
             }
             prev = cur;
             cur = cur->next;
-        }
-        else
-        {
-            if (prev)
-            {
+        } else {
+            if (prev){
                 prev->next = cur->next;
             }
 
@@ -263,8 +229,7 @@ Node* partition(Node* head, Node* end, Node** newHead, Node** newEnd, auto compa
         }
     }
 
-    if (!*newHead)
-    {
+    if (!*newHead) {
         *newHead = pivot;
     }
 
@@ -273,10 +238,8 @@ Node* partition(Node* head, Node* end, Node** newHead, Node** newEnd, auto compa
     return pivot;
 }
 
-Node* quickSortRecursive(Node* head, Node* end, auto comparator, long long& swapCount)
-{
-    if (!head || head == end)
-    {
+Node* quickSortRecursive(Node* head, Node* end, auto comparator, long long& swapCount){
+    if (!head || head == end){
         return head;
     }
 
@@ -285,11 +248,9 @@ Node* quickSortRecursive(Node* head, Node* end, auto comparator, long long& swap
 
     Node* pivot = partition(head, end, &newHead, &newEnd, comparator, swapCount);
 
-    if (newHead != pivot)
-    {
+    if (newHead != pivot) {
         Node* temp = newHead;
-        while (temp->next != pivot)
-        {
+        while (temp->next != pivot){
             temp = temp->next;
         }
         temp->next = nullptr;
@@ -305,10 +266,8 @@ Node* quickSortRecursive(Node* head, Node* end, auto comparator, long long& swap
     return newHead;
 }
 
-Node* quickSort(Node* head, auto comparator, long long& swapCount, double& sortTime)
-{
-    if (!head || !head->next)
-    {
+Node* quickSort(Node* head, auto comparator, long long& swapCount, double& sortTime){
+    if (!head || !head->next){
         return head;
     }
 
@@ -326,10 +285,8 @@ Node* quickSort(Node* head, auto comparator, long long& swapCount, double& sortT
     return head;
 }
 
-void sortMenu(Node*& head)
-{
-    while (true)
-    {
+void sortMenu(Node*& head){
+    while (true){
         cout << "\n========== Sorting Menu ==========\n";
 
         cout << "Choose Column to Sort By:\n";
@@ -350,8 +307,7 @@ void sortMenu(Node*& head)
 
         if (columnChoice == 11) break;
 
-        if (!(columnChoice >= 1 && columnChoice <= 10))
-        {
+        if (!(columnChoice >= 1 && columnChoice <= 10)){
             cout << "Invalid column choice. Please try again.\n";
             continue;
         }
@@ -363,8 +319,7 @@ void sortMenu(Node*& head)
         int algoChoice;
         cin >> algoChoice;
 
-        if (!(algoChoice == 1 || algoChoice == 2))
-        {
+        if (!(algoChoice == 1 || algoChoice == 2)){
             cout << "Invalid algorithm choice. Please try again.\n";
             continue;
         }
@@ -379,33 +334,31 @@ void sortMenu(Node*& head)
         bool ascending = (orderChoice == 1);
 
         string columnName;
-        auto comparator = [&](const Playlist& a, const Playlist& b)
-        {
-            switch (columnChoice)
-            {
-            case 1: columnName = "Song ID";
-                return ascending
-                           ? extractSongIdNumber(a.song_id) < extractSongIdNumber(b.song_id)
-                           : extractSongIdNumber(a.song_id) > extractSongIdNumber(b.song_id);
-            case 2: columnName = "Title";
-                return ascending ? a.song_title < b.song_title : a.song_title > b.song_title;
-            case 3: columnName = "Artist";
-                return ascending ? a.artist < b.artist : a.artist > b.artist;
-            case 4: columnName = "Album";
-                return ascending ? a.album < b.album : a.album > b.album;
-            case 5: columnName = "Genre";
-                return ascending ? a.genre < b.genre : a.genre > b.genre;
-            case 6: columnName = "Release Date";
-                return ascending ? a.release_date < b.release_date : a.release_date > b.release_date;
-            case 7: columnName = "Duration";
-                return ascending ? a.duration < b.duration : a.duration > b.duration;
-            case 8: columnName = "Popularity";
-                return ascending ? a.popularity < b.popularity : a.popularity > b.popularity;
-            case 9: columnName = "Streams";
-                return ascending ? a.stream < b.stream : a.stream > b.stream;
-            case 10: columnName = "Language";
-                return ascending ? a.language < b.language : a.language > b.language;
-            default: return true;
+        auto comparator = [&](const Playlist& a, const Playlist& b){
+            switch (columnChoice){
+                case 1: columnName = "Song ID";
+                    return ascending
+                               ? extractSongIdNumber(a.song_id) < extractSongIdNumber(b.song_id)
+                               : extractSongIdNumber(a.song_id) > extractSongIdNumber(b.song_id);
+                case 2: columnName = "Title";
+                    return ascending ? a.song_title < b.song_title : a.song_title > b.song_title;
+                case 3: columnName = "Artist";
+                    return ascending ? a.artist < b.artist : a.artist > b.artist;
+                case 4: columnName = "Album";
+                    return ascending ? a.album < b.album : a.album > b.album;
+                case 5: columnName = "Genre";
+                    return ascending ? a.genre < b.genre : a.genre > b.genre;
+                case 6: columnName = "Release Date";
+                    return ascending ? a.release_date < b.release_date : a.release_date > b.release_date;
+                case 7: columnName = "Duration";
+                    return ascending ? a.duration < b.duration : a.duration > b.duration;
+                case 8: columnName = "Popularity";
+                    return ascending ? a.popularity < b.popularity : a.popularity > b.popularity;
+                case 9: columnName = "Streams";
+                    return ascending ? a.stream < b.stream : a.stream > b.stream;
+                case 10: columnName = "Language";
+                    return ascending ? a.language < b.language : a.language > b.language;
+                default: return true;
             }
         };
 
@@ -413,8 +366,7 @@ void sortMenu(Node*& head)
         string algorithmName;
         string sortOrder = ascending ? "Ascending" : "Descending";
 
-        if (algoChoice == 1)
-        {
+        if (algoChoice == 1){
             auto start = chrono::high_resolution_clock::now();
 
             head = mergeSort(head, comparator, swapCount);
@@ -426,9 +378,7 @@ void sortMenu(Node*& head)
             globalSortTime = elapsed.count();
 
             algorithmName = "Merge Sort";
-        }
-        else if (algoChoice == 2)
-        {
+        } else if (algoChoice == 2) {
             double sortTime = 0.0;
             head = quickSort(head, comparator, swapCount, sortTime);
 
@@ -446,8 +396,7 @@ void sortMenu(Node*& head)
 
 
 // Main menu function
-void displayMenu()
-{
+void displayMenu(){
     cout << "\n==========  Song Searcher ==========\n";
     cout << "1: Display Playlists\n";
     cout << "2: Sort Playlists\n";
@@ -470,16 +419,16 @@ void searchSubMenu(Node* head) {
         cin >> choice;
 
         switch (choice) {
-        case 1:
-            cout << "Search by Title selected. Functionality to be implemented.\n";
-            break;
-        case 2:
-            cout << "Search by Artist selected. Functionality to be implemented.\n";
-            break;
-        case 3:
-            return; // Return to the main menu
-        default:
-            cout << "Invalid choice. Please try again.\n";
+            case 1:
+                cout << "Search by Title selected. Functionality to be implemented.\n";
+                break;
+            case 2:
+                cout << "Search by Artist selected. Functionality to be implemented.\n";
+                break;
+            case 3:
+                return; // Return to the main menu
+            default:
+                cout << "Invalid choice. Please try again.\n";
         }
     }
 }
