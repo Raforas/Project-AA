@@ -275,12 +275,12 @@ Node* quickSort(Node* head, auto comparator, long long& swapCount, double& sortT
 
     Node* end = getTail(head);
 
-    auto start = chrono::high_resolution_clock::now();
+    const auto start = chrono::high_resolution_clock::now();
 
     head = quickSortRecursive(head, end, comparator, swapCount);
 
-    auto endTime = chrono::high_resolution_clock::now();
-    chrono::duration<double> elapsed = endTime - start;
+    const auto endTime = chrono::high_resolution_clock::now();
+    const chrono::duration<double> elapsed = endTime - start;
 
     sortTime = elapsed.count();
 
@@ -443,7 +443,8 @@ void additionalFunctionsSubMenu(Node* head) {
         cout << "\n========== Additional Functions Menu ==========\n";
         cout << "1. Additional Function 1\n"; // Placeholder for the first additional function
         cout << "2. Additional Function 2\n"; // Placeholder for the second additional function
-        cout << "3. Back to Main Menu\n";
+        cout << "3. Additional Function 2\n"; // Placeholder for the second additional function
+        cout << "4. Back to Main Menu\n";
         cout << "Enter your choice: ";
         int choice;
         cin >> choice;
@@ -456,6 +457,9 @@ void additionalFunctionsSubMenu(Node* head) {
             cout << "Additional Function 2 selected. Functionality to be implemented.\n";
             break;
         case 3:
+                cout << "Additional Function 2 selected. Functionality to be implemented.\n";
+            break;
+        case 4:
             return; // Return to the main menu
         default:
             cout << "Invalid choice. Please try again.\n";
@@ -463,11 +467,9 @@ void additionalFunctionsSubMenu(Node* head) {
     }
 }
 
-
-
 // Main function with updated switch cases
 int main() {
-    string filename = "../spotify_songs_dataset_unsorted.csv"; // Path to dataset
+    const string filename = "../spotify_songs_dataset_unsorted.csv"; // Path to dataset
     Node* head = readCsv(filename);
 
     while (true) {
