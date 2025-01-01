@@ -457,7 +457,7 @@ void additionalFunctionsSubMenu(Node* head) {
             cout << "Additional Function 2 selected. Functionality to be implemented.\n";
             break;
         case 3:
-                cout << "Additional Function 2 selected. Functionality to be implemented.\n";
+            cout << "Additional Function 3 selected. Functionality to be implemented.\n";
             break;
         case 4:
             return; // Return to the main menu
