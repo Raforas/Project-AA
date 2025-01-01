@@ -12,6 +12,8 @@ using namespace std;
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
 double globalSortTime = 0.0; // Global variable to track sorting duration
 
+
+
 struct Playlist {
     string song_id;
     string song_title;
@@ -32,12 +34,49 @@ struct Node {
     explicit Node(Playlist  playlist) : data(move(playlist)), next(nullptr){}
 };
 
-Node* readCsv(const string& filename){
+
+// Function declarations
+void displayMenu();
+Node* deepCopyList(Node* head);
+Node* readCsv(const string& filename, Node*& originalHead);
+string truncateText(const string& text, const size_t maxLength = 37);
+void displayPlaylists(Node* head, int limit = 100);
+void displaySortingResults(const string& algorithmName, const string& sortOrder, const string& sortBy);
+int extractSongIdNumber(const string& song_id);
+Node* merge(Node* left, Node* right, auto comparator, long long& swapCount);
+void split(Node* source, Node** front, Node** back);
+Node* mergeSort(Node* head, auto comparator, long long& swapCount);
+Node* getTail(Node* cur);
+Node* partition(Node* head, Node* end, Node** newHead, Node** newEnd, auto comparator, long long& swapCount);
+Node* quickSortRecursive(Node* head, Node* end, auto comparator, long long& swapCount);
+Node* quickSort(Node* head, auto comparator, long long& swapCount);
+void sortMenu(Node*& head, Node* originalHead);
+void searchSubMenu(Node* head);
+void additionalFunctionsSubMenu(Node* head);
+
+
+Node* deepCopyList(Node* head) {
+    if (!head) return nullptr;
+
+    Node* newHead = new Node(head->data);
+    Node* current = head->next;
+    Node* newCurrent = newHead;
+
+    while (current) {
+        newCurrent->next = new Node(current->data);
+        newCurrent = newCurrent->next;
+        current = current->next;
+    }
+
+    return newHead;
+}
+
+Node* readCsv(const string& filename, Node*& originalHead) {
     Node* head = nullptr; // Linked list head
     Node* tail = nullptr; // Pointer to track the end
 
     ifstream file(filename);
-    if (!file.is_open()){
+    if (!file.is_open()) {
         cerr << "Error: Could not open the file " << filename << endl;
         return nullptr;
     }
@@ -45,7 +84,7 @@ Node* readCsv(const string& filename){
     string line;
     getline(file, line); // Skip header
 
-    while (getline(file, line)){
+    while (getline(file, line)) {
         stringstream ss(line);
         Playlist playlist;
         string value;
@@ -66,7 +105,7 @@ Node* readCsv(const string& filename){
 
         Node* newNode = new Node(playlist);
 
-        if (!head){
+        if (!head) {
             head = newNode;
             tail = newNode;
         } else {
@@ -76,10 +115,15 @@ Node* readCsv(const string& filename){
     }
 
     file.close();
+
+    // Make a deep copy of the original data
+    originalHead = deepCopyList(head);
+
     return head;
 }
 
-string truncateText(const string& text, const size_t maxLength = 100){
+
+string truncateText(const string& text, const size_t maxLength = 37){
     if (text.length() > maxLength){
         return text.substr(0, maxLength) + "..";
     }
@@ -268,27 +312,21 @@ Node* quickSortRecursive(Node* head, Node* end, auto comparator, long long& swap
     return newHead;
 }
 
-Node* quickSort(Node* head, auto comparator, long long& swapCount, double& sortTime){
+Node* quickSort(Node* head, auto comparator, long long& swapCount){
     if (!head || !head->next){
         return head;
     }
 
     Node* end = getTail(head);
 
-    const auto start = chrono::high_resolution_clock::now();
-
     head = quickSortRecursive(head, end, comparator, swapCount);
 
-    const auto endTime = chrono::high_resolution_clock::now();
-    const chrono::duration<double> elapsed = endTime - start;
-
-    sortTime = elapsed.count();
 
     return head;
 }
 
-void sortMenu(Node*& head){
-    while (true){
+void sortMenu(Node*& head, Node* originalHead) {
+    while (true) {
         cout << "\n========== Sorting Menu ==========\n";
 
         cout << "Choose Column to Sort By:\n";
@@ -309,7 +347,7 @@ void sortMenu(Node*& head){
 
         if (columnChoice == 11) break;
 
-        if (!(columnChoice >= 1 && columnChoice <= 10)){
+        if (!(columnChoice >= 1 && columnChoice <= 10)) {
             cout << "Invalid column choice. Please try again.\n";
             continue;
         }
@@ -321,7 +359,7 @@ void sortMenu(Node*& head){
         int algoChoice;
         cin >> algoChoice;
 
-        if (!(algoChoice == 1 || algoChoice == 2)){
+        if (!(algoChoice == 1 || algoChoice == 2)) {
             cout << "Invalid algorithm choice. Please try again.\n";
             continue;
         }
@@ -336,8 +374,8 @@ void sortMenu(Node*& head){
         bool ascending = (orderChoice == 1);
 
         string columnName;
-        auto comparator = [&](const Playlist& a, const Playlist& b){
-            switch (columnChoice){
+        auto comparator = [&](const Playlist& a, const Playlist& b) {
+            switch (columnChoice) {
                 case 1: columnName = "Song ID";
                     return ascending
                                ? extractSongIdNumber(a.song_id) < extractSongIdNumber(b.song_id)
@@ -368,7 +406,10 @@ void sortMenu(Node*& head){
         string algorithmName;
         string sortOrder = ascending ? "Ascending" : "Descending";
 
-        if (algoChoice == 1){
+        // Always start with a fresh copy of the original data
+        head = deepCopyList(originalHead);
+
+        if (algoChoice == 1) {
             auto start = chrono::high_resolution_clock::now();
 
             head = mergeSort(head, comparator, swapCount);
@@ -381,11 +422,16 @@ void sortMenu(Node*& head){
 
             algorithmName = "Merge Sort";
         } else if (algoChoice == 2) {
-            double sortTime = 0.0;
-            head = quickSort(head, comparator, swapCount, sortTime);
+
+            auto start = chrono::high_resolution_clock::now();
+
+            head = quickSort(head, comparator, swapCount);
+
+            auto end = chrono::high_resolution_clock::now();
+            chrono::duration<double> elapsed = end - start;
 
             globalSwapCount = swapCount;
-            globalSortTime = sortTime;
+            globalSortTime = elapsed.count();
 
             algorithmName = "Quick Sort";
         }
@@ -395,7 +441,6 @@ void sortMenu(Node*& head){
         displaySortingResults(algorithmName, sortOrder, columnName);
     }
 }
-
 
 // Main menu function
 void displayMenu(){
@@ -470,7 +515,8 @@ void additionalFunctionsSubMenu(Node* head) {
 // Main function with updated switch cases
 int main() {
     const string filename = "../spotify_songs_dataset_unsorted.csv"; // Path to dataset
-    Node* head = readCsv(filename);
+    Node* originalHead = nullptr; // Original data storage
+    Node* head = readCsv(filename, originalHead);
 
     while (true) {
         displayMenu();
@@ -479,16 +525,16 @@ int main() {
 
         switch (choice) {
         case 1:
-            displayPlaylists(head); // Call existing display functionality
+            displayPlaylists(head);
             break;
         case 2:
-            sortMenu(head); // Call existing sort functionality
+            sortMenu(head, originalHead); // Updated function
             break;
         case 3:
-            searchSubMenu(head); // Call search submenu
+            searchSubMenu(head);
             break;
         case 4:
-            additionalFunctionsSubMenu(head); // Call additional functions submenu
+            additionalFunctionsSubMenu(head);
             break;
         case 5:
             cout << "Exiting program. Goodbye!\n";
@@ -497,4 +543,6 @@ int main() {
             cout << "Invalid choice. Please try again.\n";
         }
     }
+
+    return 0;
 }
