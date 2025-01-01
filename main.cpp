@@ -39,8 +39,8 @@ struct Node {
 void displayMenu();
 Node* deepCopyList(Node* head);
 Node* readCsv(const string& filename, Node*& originalHead);
-string truncateText(const string& text, const size_t maxLength = 37);
-void displayPlaylists(Node* head, int limit = 100);
+string truncateText(const string& text, const size_t maxLength);
+void displayPlaylists(Node* head, int limit );
 void displaySortingResults(const string& algorithmName, const string& sortOrder, const string& sortBy);
 int extractSongIdNumber(const string& song_id);
 Node* merge(Node* left, Node* right, auto comparator, long long& swapCount);
