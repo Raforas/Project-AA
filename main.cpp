@@ -9,8 +9,6 @@
 #include <utility>
 using namespace std;
 
-//vincent uduh
-
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
 long long globalSortTimeMs = 0; // Global variable to track sorting duration in milliseconds
 long long globalSortStartTimeMs = 0; // Global start time in milliseconds
