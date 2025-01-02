@@ -10,7 +10,9 @@
 using namespace std;
 
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
-double globalSortTime = 0.0; // Global variable to track sorting duration
+long long globalSortTimeMs = 0; // Global variable to track sorting duration in milliseconds
+long long globalSortStartTimeMs = 0; // Global start time in milliseconds
+long long globalSortEndTimeMs = 0; // Global end time in milliseconds
 
 
 
@@ -173,7 +175,9 @@ void displaySortingResults(const string& algorithmName, const string& sortOrder,
     cout << "Sorted By    : " << sortBy << endl;
     cout << "-------------------------------------\n";
     cout << "Total Swaps  : " << globalSwapCount << endl;
-    cout << "Elapsed Time : " << fixed << setprecision(6) << globalSortTime << " seconds\n";
+    cout << "Start Time   : " << globalSortStartTimeMs << " milliseconds\n";
+    cout << "End Time     : " << globalSortEndTimeMs << " milliseconds\n";
+    cout << "Elapsed Time : " << globalSortTimeMs << " milliseconds\n";
     cout << "=====================================\n";
 }
 
@@ -411,27 +415,31 @@ void sortMenu(Node*& head, Node* originalHead) {
 
         if (algoChoice == 1) {
             auto start = chrono::high_resolution_clock::now();
+            globalSortStartTimeMs = chrono::duration_cast<chrono::milliseconds>(start.time_since_epoch()).count();
 
             head = mergeSort(head, comparator, swapCount);
 
             auto end = chrono::high_resolution_clock::now();
+            globalSortEndTimeMs = chrono::duration_cast<chrono::milliseconds>(end.time_since_epoch()).count();
             chrono::duration<double> elapsed = end - start;
 
             globalSwapCount = swapCount;
-            globalSortTime = elapsed.count();
+            globalSortTimeMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
 
             algorithmName = "Merge Sort";
         } else if (algoChoice == 2) {
 
             auto start = chrono::high_resolution_clock::now();
+            globalSortStartTimeMs = chrono::duration_cast<chrono::milliseconds>(start.time_since_epoch()).count();
 
             head = quickSort(head, comparator, swapCount);
 
             auto end = chrono::high_resolution_clock::now();
+            globalSortEndTimeMs = chrono::duration_cast<chrono::milliseconds>(end.time_since_epoch()).count();
             chrono::duration<double> elapsed = end - start;
 
             globalSwapCount = swapCount;
-            globalSortTime = elapsed.count();
+            globalSortTimeMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
 
             algorithmName = "Quick Sort";
         }
