@@ -34,26 +34,30 @@ struct Node {
     explicit Node(Playlist  playlist) : data(move(playlist)), next(nullptr){}
 };
 
+//Utility or global use functions
+string truncateText(const string& text, const size_t maxLength = 37){// Function to truncate text
+    if (text.length() > maxLength){
+        return text.substr(0, maxLength) + "..";
+    }
+    return text;
+}
 
-// Function declarations
-void displayMenu();
-Node* deepCopyList(const Node* head);
-Node* readCsv(const string& filename, Node*& originalHead);
-string truncateText(const string& text, size_t maxLength);
-void displayPlaylists(const Node* head, int limit );
-void displaySortingResults(const string& algorithmName, const string& sortOrder, const string& sortBy);
-int extractSongIdNumber(const string& song_id);
-Node* merge(Node* left, Node* right, auto comparator, long long& swapCount);
-void split(Node* source, Node** front, Node** back);
-Node* mergeSort(Node* head, auto comparator, long long& swapCount);
-Node* getTail(Node* cur);
-Node* partition(Node* head, Node* end, Node** newHead, Node** newEnd, auto comparator, long long& swapCount);
-Node* quickSortRecursive(Node* head, Node* end, auto comparator, long long& swapCount);
-Node* quickSort(Node* head, auto comparator, long long& swapCount);
-void sortMenu(Node*& head, const Node* originalHead);
-void searchSubMenu(const Node* head);
-void additionalFunctionsSubMenu(Node* head);
+string toLower(const string& str) {// Function to convert a string to lowercase
+    string lowerStr = str;
+    ranges::transform(lowerStr, lowerStr.begin(), ::tolower);
+    return lowerStr;
+}
 
+bool contains(const string& str, const string& query) {// Comparator to check if a string contains the query (case-insensitive)
+    string lowerStr = toLower(str);
+    string lowerQuery = toLower(query);
+    return lowerStr.find(lowerQuery) != string::npos;
+}
+
+// Function Declarations
+void displayPlaylistHeader();
+void displayPlaylists(const Node*, int);
+void displaySortingResults(const string&, const string&, const string&);
 
 Node* deepCopyList(const Node* head) {
     if (!head) return nullptr;
@@ -122,64 +126,6 @@ Node* readCsv(const string& filename, Node*& originalHead) {
     return head;
 }
 
-
-string truncateText(const string& text, const size_t maxLength = 37){
-    if (text.length() > maxLength){
-        return text.substr(0, maxLength) + "..";
-    }
-    return text;
-}
-
-void displayPlaylists(const Node* head, const int limit = 100){
-    cout << left
-        << setw(10) << "Song ID"
-        << setw(40) << "Title"
-        << setw(30) << "Artist"
-        << setw(30) << "Album"
-        << setw(15) << "Genre"
-        << setw(15) << "Release Date"
-        << setw(10) << "Duration"
-        << setw(15) << "Popularity"
-        << setw(10) << "Stream"
-        << setw(10) << "Language" << endl;
-    cout << string(185, '-') << endl;
-
-    const Node* current = head;
-    int count = 0;
-
-    while (current && count < limit){
-        const auto&[song_id, song_title, artist, album, genre,
-            release_date, duration, popularity, stream, language] = current->data;
-        cout << setw(10) << song_id
-            << setw(40) << truncateText(song_title)
-            << setw(30) << truncateText(artist)
-            << setw(30) << truncateText(album)
-            << setw(15) << truncateText(genre)
-            << setw(15) << release_date
-            << setw(10) << duration
-            << setw(15) << popularity
-            << setw(10) << stream
-            << setw(10) << language << endl;
-
-        current = current->next;
-        ++count;
-    }
-}
-
-// Helper function to display sorting results
-void displaySortingResults(const string& algorithmName, const string& sortOrder, const string& sortBy){
-    cout << "\n========== SORTING RESULTS ==========\n";
-    cout << "Algorithm    : " << algorithmName << endl;
-    cout << "Order        : " << sortOrder << endl;
-    cout << "Sorted By    : " << sortBy << endl;
-    cout << "-------------------------------------\n";
-    cout << "Total Swaps  : " << globalSwapCount << endl;
-    cout << "Start Time   : " << globalSortStartTimeMs << " milliseconds\n";
-    cout << "End Time     : " << globalSortEndTimeMs << " milliseconds\n";
-    cout << "Elapsed Time : " << globalSortTimeMs << " milliseconds\n";
-    cout << "=====================================\n";
-}
-
 // Helper function to extract the numeric part of song_id
 int extractSongIdNumber(const string& song_id){
     size_t pos = 0;
@@ -239,6 +185,7 @@ Node* mergeSort(Node* head, auto comparator, long long& swapCount){
 
     return merge(front, back, comparator, swapCount);
 }
+// Merge Sort Section Ends
 
 // Quick Sort Implementation
 Node* getTail(Node* cur){
@@ -326,6 +273,278 @@ Node* quickSort(Node* head, auto comparator, long long& swapCount){
 
 
     return head;
+}
+// Quick Sort Section Ends
+
+// MANBIL
+// Binary Search Implementation
+Node* getSortedHead(const Node* head, const function<bool(const Playlist&, const Playlist&)> &comparator) {
+    Node* copyList = deepCopyList(head);
+    long long dummySwap = 0;  // Dummy variable for swap count
+    return mergeSort(copyList, comparator, dummySwap); // Use existing merge sort
+}
+
+// Function to get the middle node
+Node* getMid(Node* start, Node* end) {
+    Node* slow = start;
+    Node* fast = start;
+
+    while (fast != end && fast->next != end) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+
+    return slow;
+}
+
+// Binary Search Implementation
+void binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator, int i) {
+    Node* start = head;
+    Node* end = nullptr;
+    bool matchFound = false;
+
+    while (start != end) {
+        Node* mid = getMid(start, end);
+
+        if (!mid) break;
+
+        int compResult = comparator(mid->data, query);
+
+        if (compResult == 0) {
+            // Print the matched result
+            cout << "Target found at index [" << i << "]" << endl;
+            displayPlaylistHeader();
+            displayPlaylists(mid, 1);
+            matchFound = true;
+
+            // Search for additional matches on both sides
+            Node* temp = mid->next;
+            while (temp && comparator(temp->data, query) == 0) {
+                displayPlaylists(temp, 1);
+                temp = temp->next;
+            }
+
+            cout << endl;
+
+            temp = start;
+            while (temp && temp != mid) {
+                if (comparator(temp->data, query) == 0) {
+                    displayPlaylists(temp, 1);
+                }
+                temp = temp->next;
+            }
+
+            break; // Exit the binary search once all matches are found
+        } else if (compResult < 0) {
+            start = mid->next; // Search right half
+        } else {
+            end = mid; // Search left half
+        }
+    }
+
+    if (!matchFound) {
+        cout << "No match found for the query '" << query << "'.\n";
+    }
+}
+
+void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//insert data from file into string array
+    fin.open(filename);
+
+    if (fin.is_open()) {
+        int i = 0;
+        string line; // Temporary variable to store each line
+        while (getline(fin, line)) { // Use getline to read up to the newline character
+            arr[i] = line;  // Store the line into the array
+            i++;
+        }
+    }
+    fin.close();
+}
+
+void searchSubMenu(Node* head) {
+    while (true) {
+        ifstream fin;
+        string titleSearchTarget[100];
+        string artistSearchTarget[100];
+        string albumSearchTarget[100];
+        string genreSearchTarget[100];
+        string languageSearchTarget[100];
+        int searchType;//Binary search or Jump search
+
+        cout << "\n========== Search Menu ==========\n";
+        cout << "1. Search by Title\n";
+        cout << "2. Search by Artist\n";
+        cout << "3. Search by Album\n";
+        cout << "4. Search by Genre\n";
+        cout << "5. Search by Language\n";
+        cout << "6. Back to Main Menu\n";
+        cout << "Enter your choice: ";
+        int choice;
+        cin >> choice;
+
+        Node* sortedHead = nullptr;
+        switch (choice) {
+            case 1:
+                cout << "Search by Title selected.\n\n";
+                insertIntoArray(titleSearchTarget, fin, "../target_search_title.txt");
+
+                sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
+                        return toLower(a.song_title) < toLower(b.song_title);
+                });
+
+                for (int i = 0; i < 100; i++) {
+                    cout << "Search Target " << (i + 1) << ": " << titleSearchTarget[i] << endl;
+                    binarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& query) {
+                        return contains(p.song_title, query) ? 0 : (toLower(p.song_title) < toLower(query) ? -1 : 1);
+                    }, i);
+
+                    cout << endl;
+                }
+                break;
+            case 2:
+                cout << "Search by Artist selected.\n";
+                insertIntoArray(artistSearchTarget, fin, "../target_search_artist.txt");
+
+                sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
+                    return toLower(a.artist) < toLower(b.artist);
+                });
+
+                for (int i = 0; i < 100; i++) {
+                    cout << "Search Target " << (i + 1) << ": " << artistSearchTarget[i] << endl;
+                    binarySearch(sortedHead, artistSearchTarget[i], [](const Playlist& p, const string& query) {
+                        return contains(p.artist, query) ? 0 : (toLower(p.artist) < toLower(query) ? -1 : 1);
+                    }, i);
+
+                    cout << endl;
+                }
+                break;
+            case 3:
+                cout << "Search by Album selected.\n";
+                insertIntoArray(albumSearchTarget, fin, "../target_search_album.txt");
+
+                sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
+                    return toLower(a.album) < toLower(b.album);
+                });
+
+                for (int i = 0; i < 100; i++) {
+                    cout << "Search Target " << (i + 1) << ": " << albumSearchTarget[i] << endl;
+                    binarySearch(sortedHead, albumSearchTarget[i], [](const Playlist& p, const string& query) {
+                        return contains(p.album, query) ? 0 : (toLower(p.album) < toLower(query) ? -1 : 1);
+                    }, i);
+
+                    cout << endl;
+                }
+                break;
+            case 4:
+                cout << "Search by Genre selected.\n";
+                insertIntoArray(genreSearchTarget, fin, "../target_search_genre.txt");
+
+                sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
+                    return toLower(a.genre) < toLower(b.genre);
+                });
+
+                for (int i = 0; i < 100; i++) {
+                    cout << "Search Target " << (i + 1) << ": " << genreSearchTarget[i] << endl;
+                    binarySearch(sortedHead, genreSearchTarget[i], [](const Playlist& p, const string& query) {
+                        return contains(p.genre, query) ? 0 : (toLower(p.genre) < toLower(query) ? -1 : 1);
+                    }, i);
+
+                    cout << endl;
+                }
+                break;
+            case 5:
+                cout << "Search by Language selected.\n";
+                insertIntoArray(languageSearchTarget, fin, "../target_search_language.txt");
+
+                sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
+                    return toLower(a.language) < toLower(b.language);
+                });
+
+                for (int i = 0; i < 100; i++) {
+                    cout << "Search Target " << (i + 1) << ": " << languageSearchTarget[i] << endl;
+                    binarySearch(sortedHead, languageSearchTarget[i], [](const Playlist& p, const string& query) {
+                        return contains(p.language, query) ? 0 : (toLower(p.language) < toLower(query) ? -1 : 1);
+                    }, i);
+
+                    cout << endl;
+                }
+                break;
+            case 6:
+                return; // Return to the main menu
+            default:
+                cout << "Invalid choice. Please try again.\n";
+        }
+        fin.close();
+    }
+}
+
+// NAQIB PART
+// Function placeholders for additional functions sub-functions
+void additionalFunctionsSubMenu(Node* head) {
+    while (true) {
+        cout << "\n========== Additional Functions Menu ==========\n";
+        cout << "1. Additional Function 1\n"; // Placeholder for the first additional function
+        cout << "2. Additional Function 2\n"; // Placeholder for the second additional function
+        cout << "3. Additional Function 2\n"; // Placeholder for the second additional function
+        cout << "4. Back to Main Menu\n";
+        cout << "Enter your choice: ";
+        int choice;
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                cout << "Additional Function 1 selected. Functionality to be implemented.\n";
+                break;
+            case 2:
+                cout << "Additional Function 2 selected. Functionality to be implemented.\n";
+                break;
+            case 3:
+                cout << "Additional Function 3 selected. Functionality to be implemented.\n";
+                break;
+            case 4:
+                return; // Return to the main menu
+            default:
+                cout << "Invalid choice. Please try again.\n";
+        }
+    }
+}
+
+void displayPlaylistHeader() {
+    cout << left
+        << setw(10) << "Song ID"
+        << setw(40) << "Title"
+        << setw(30) << "Artist"
+        << setw(30) << "Album"
+        << setw(15) << "Genre"
+        << setw(15) << "Release Date"
+        << setw(10) << "Duration"
+        << setw(15) << "Popularity"
+        << setw(10) << "Stream"
+        << setw(10) << "Language" << endl;
+    cout << string(185, '-') << endl;
+}
+
+void displayPlaylists(const Node* head, const int limit = 100){
+    const Node* current = head;
+    int count = 0;
+
+    while (current && count < limit){
+        const auto&[song_id, song_title, artist, album, genre,
+            release_date, duration, popularity, stream, language] = current->data;
+        cout << setw(10) << song_id
+            << setw(40) << truncateText(song_title)
+            << setw(30) << truncateText(artist)
+            << setw(30) << truncateText(album)
+            << setw(15) << truncateText(genre)
+            << setw(15) << release_date
+            << setw(10) << duration
+            << setw(15) << popularity
+            << setw(10) << stream
+            << setw(10) << language << endl;
+
+        current = current->next;
+        ++count;
+    }
 }
 
 void sortMenu(Node*& head, const Node* originalHead) {
@@ -444,153 +663,23 @@ void sortMenu(Node*& head, const Node* originalHead) {
         }
 
         cout << "\n========== SORTED PLAYLIST ==========\n";
+        displayPlaylistHeader();
         displayPlaylists(head);
         displaySortingResults(algorithmName, sortOrder, columnName);
     }
 }
 
-// Main menu function
-void displayMenu(){
-    cout << "\n==========  Song Searcher ==========\n";
-    cout << "1: Display Playlists\n";
-    cout << "2: Sort Playlists\n";
-    cout << "3: Search\n";
-    cout << "4: Additional Functions\n";
-    cout << "5: Exit\n";
-    cout << "Enter your choice: ";
-}
-
-// MANBIL
-Node* getMid(Node* start, const Node* end) {
-    if (!start) return nullptr;
-
-    Node* slow = start;
-    const Node* fast = start->next;
-
-    while (fast && fast->next) {
-        fast = fast->next;
-
-        if (fast != end) {
-            slow = slow->next;
-            fast = fast->next;
-        }
-    }
-
-    return slow;
-}
-
-Node* getSortedHead(const Node* head, const function<bool(const Playlist&, const Playlist&)> &comparator) {
-    Node* copyList = deepCopyList(head);
-    long long dummySwap = 0;  // Dummy variable for swap count
-    return mergeSort(copyList, comparator, dummySwap); // Use existing merge sort
-}
-
-void binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)> &comparator) {
-    Node* start = head;
-    const Node* end = nullptr;
-
-    while (start != end) {
-        const Node* mid = getMid(start, end);
-
-        if (!mid) break;
-
-        if (const int compResult = comparator(mid->data, query); compResult == 0) {
-            cout << "\nMatch found: ";
-            displayPlaylists(mid, 1);  // Display 1 result
-            return;
-        } else if (compResult < 0) {
-            start = mid->next; // Search right half
-        } else {
-            end = mid; // Search left half
-        }
-    }
-
-    cout << "No match found for the query '" << query << "'.\n";
-}
-
-void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//insert data from file into string array
-    fin.open(filename);
-
-    if (fin.is_open()) {
-        int i = 0;
-        string line; // Temporary variable to store each line
-        while (getline(fin, line)) { // Use getline to read up to the newline character
-            arr[i] = line;  // Store the line into the array
-            i++;
-        }
-    }
-    fin.close();
-}
-
-void searchSubMenu(const Node* head) {
-    while (true) {
-        ifstream fin;
-        string titleSearchTarget[100];
-        string artistSearchTarget[100];
-        int searchType;//Binary search or Jump search
-
-        cout << "\n========== Search Menu ==========\n";
-        cout << "1. Search by Title\n"; // Placeholder for search by title
-        cout << "2. Search by Artist\n"; // Placeholder for search by artist
-        cout << "3. Back to Main Menu\n";
-        cout << "Enter your choice: ";
-        int choice;
-        cin >> choice;
-
-        Node* sortedHead = nullptr;
-        switch (choice) {
-            case 1:
-                cout << "Search by Title selected.\n";
-                insertIntoArray(titleSearchTarget, fin, "../target_search_title.txt");
-                sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) { return a.song_title < b.song_title; });
-
-                for (int i = 0; i < 100; i++) {
-                    binarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& q) { return p.song_title.compare(q); });
-                }
-
-            break;
-            case 2:
-                cout << "Search by Artist selected. Functionality to be implemented.\n";
-                insertIntoArray(artistSearchTarget, fin, "../target_search_artist.txt");
-                break;
-            case 3:
-                return; // Return to the main menu
-            default:
-                cout << "Invalid choice. Please try again.\n";
-        }
-        fin.close();
-    }
-}
-
-// NAQIB PART
-// Function placeholders for additional functions sub-functions
-void additionalFunctionsSubMenu(Node* head) {
-    while (true) {
-        cout << "\n========== Additional Functions Menu ==========\n";
-        cout << "1. Additional Function 1\n"; // Placeholder for the first additional function
-        cout << "2. Additional Function 2\n"; // Placeholder for the second additional function
-        cout << "3. Additional Function 2\n"; // Placeholder for the second additional function
-        cout << "4. Back to Main Menu\n";
-        cout << "Enter your choice: ";
-        int choice;
-        cin >> choice;
-
-        switch (choice) {
-            case 1:
-                cout << "Additional Function 1 selected. Functionality to be implemented.\n";
-                break;
-            case 2:
-                cout << "Additional Function 2 selected. Functionality to be implemented.\n";
-                break;
-            case 3:
-                cout << "Additional Function 3 selected. Functionality to be implemented.\n";
-                break;
-            case 4:
-                return; // Return to the main menu
-            default:
-                cout << "Invalid choice. Please try again.\n";
-        }
-    }
+void displaySortingResults(const string& algorithmName, const string& sortOrder, const string& sortBy){// function to display sorting results
+    cout << "\n========== SORTING RESULTS ==========\n";
+    cout << "Algorithm    : " << algorithmName << endl;
+    cout << "Order        : " << sortOrder << endl;
+    cout << "Sorted By    : " << sortBy << endl;
+    cout << "-------------------------------------\n";
+    cout << "Total Swaps  : " << globalSwapCount << endl;
+    cout << "Start Time   : " << globalSortStartTimeMs << " milliseconds\n";
+    cout << "End Time     : " << globalSortEndTimeMs << " milliseconds\n";
+    cout << "Elapsed Time : " << globalSortTimeMs << " milliseconds\n";
+    cout << "=====================================\n";
 }
 
 // Main function with updated switch cases
@@ -600,12 +689,19 @@ int main() {
     Node* head = readCsv(filename, originalHead);
 
     while (true) {
-        displayMenu();
+        cout << "\n==========  Song Searcher ==========\n";
+        cout << "1: Display Playlists\n";
+        cout << "2: Sort Playlists\n";
+        cout << "3: Search\n";
+        cout << "4: Additional Functions\n";
+        cout << "5: Exit\n";
+        cout << "Enter your choice: ";
         int choice;
         cin >> choice;
 
         switch (choice) {
             case 1:
+                displayPlaylistHeader();
                 displayPlaylists(head);
                 break;
             case 2:
@@ -624,6 +720,4 @@ int main() {
                 cout << "Invalid choice. Please try again.\n";
         }
     }
-
-    return 0;
 }
