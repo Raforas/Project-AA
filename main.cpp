@@ -9,8 +9,6 @@
 #include <utility>
 using namespace std;
 
-//vincent uduh
-
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
 long long globalSortTimeMs = 0; // Global variable to track sorting duration in milliseconds
 long long globalSortStartTimeMs = 0; // Global start time in milliseconds
@@ -52,8 +50,8 @@ Node* getTail(Node* cur);
 Node* partition(Node* head, Node* end, Node** newHead, Node** newEnd, auto comparator, long long& swapCount);
 Node* quickSortRecursive(Node* head, Node* end, auto comparator, long long& swapCount);
 Node* quickSort(Node* head, auto comparator, long long& swapCount);
-void sortMenu(Node*& head, Node* originalHead);
-void searchSubMenu(Node* head);
+void sortMenu(Node*& head, const Node* originalHead);
+void searchSubMenu(const Node* head);
 void additionalFunctionsSubMenu(Node* head);
 
 
@@ -330,7 +328,7 @@ Node* quickSort(Node* head, auto comparator, long long& swapCount){
     return head;
 }
 
-void sortMenu(Node*& head, Node* originalHead) {
+void sortMenu(Node*& head, const Node* originalHead) {
     while (true) {
         cout << "\n========== Sorting Menu ==========\n";
 
@@ -463,6 +461,53 @@ void displayMenu(){
 }
 
 // MANBIL
+Node* getMid(Node* start, const Node* end) {
+    if (!start) return nullptr;
+
+    Node* slow = start;
+    const Node* fast = start->next;
+
+    while (fast && fast->next) {
+        fast = fast->next;
+
+        if (fast != end) {
+            slow = slow->next;
+            fast = fast->next;
+        }
+    }
+
+    return slow;
+}
+
+Node* getSortedHead(const Node* head, const function<bool(const Playlist&, const Playlist&)> &comparator) {
+    Node* copyList = deepCopyList(head);
+    long long dummySwap = 0;  // Dummy variable for swap count
+    return mergeSort(copyList, comparator, dummySwap); // Use existing merge sort
+}
+
+void binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)> &comparator) {
+    Node* start = head;
+    const Node* end = nullptr;
+
+    while (start != end) {
+        const Node* mid = getMid(start, end);
+
+        if (!mid) break;
+
+        if (const int compResult = comparator(mid->data, query); compResult == 0) {
+            cout << "\nMatch found: ";
+            displayPlaylists(mid, 1);  // Display 1 result
+            return;
+        } else if (compResult < 0) {
+            start = mid->next; // Search right half
+        } else {
+            end = mid; // Search left half
+        }
+    }
+
+    cout << "No match found for the query '" << query << "'.\n";
+}
+
 void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//insert data from file into string array
     fin.open(filename);
 
@@ -477,7 +522,7 @@ void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//inse
     fin.close();
 }
 
-void searchSubMenu(Node* head) {
+void searchSubMenu(const Node* head) {
     while (true) {
         ifstream fin;
         string titleSearchTarget[100];
@@ -492,12 +537,18 @@ void searchSubMenu(Node* head) {
         int choice;
         cin >> choice;
 
+        Node* sortedHead = nullptr;
         switch (choice) {
             case 1:
                 cout << "Search by Title selected.\n";
                 insertIntoArray(titleSearchTarget, fin, "../target_search_title.txt");
-                cout << titleSearchTarget[0] << endl;
-                break;
+                sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) { return a.song_title < b.song_title; });
+
+                for (int i = 0; i < 100; i++) {
+                    binarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& q) { return p.song_title.compare(q); });
+                }
+
+            break;
             case 2:
                 cout << "Search by Artist selected. Functionality to be implemented.\n";
                 insertIntoArray(artistSearchTarget, fin, "../target_search_artist.txt");
