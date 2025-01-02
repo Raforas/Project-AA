@@ -14,8 +14,6 @@ long long globalSortTimeMs = 0; // Global variable to track sorting duration in 
 long long globalSortStartTimeMs = 0; // Global start time in milliseconds
 long long globalSortEndTimeMs = 0; // Global end time in milliseconds
 
-
-
 struct Playlist {
     string song_id;
     string song_title;
@@ -39,10 +37,10 @@ struct Node {
 
 // Function declarations
 void displayMenu();
-Node* deepCopyList(Node* head);
+Node* deepCopyList(const Node* head);
 Node* readCsv(const string& filename, Node*& originalHead);
-string truncateText(const string& text, const size_t maxLength);
-void displayPlaylists(Node* head, int limit );
+string truncateText(const string& text, size_t maxLength);
+void displayPlaylists(const Node* head, int limit );
 void displaySortingResults(const string& algorithmName, const string& sortOrder, const string& sortBy);
 int extractSongIdNumber(const string& song_id);
 Node* merge(Node* left, Node* right, auto comparator, long long& swapCount);
@@ -57,11 +55,11 @@ void searchSubMenu(Node* head);
 void additionalFunctionsSubMenu(Node* head);
 
 
-Node* deepCopyList(Node* head) {
+Node* deepCopyList(const Node* head) {
     if (!head) return nullptr;
 
-    Node* newHead = new Node(head->data);
-    Node* current = head->next;
+    const auto newHead = new Node(head->data);
+    const Node* current = head->next;
     Node* newCurrent = newHead;
 
     while (current) {
@@ -105,7 +103,7 @@ Node* readCsv(const string& filename, Node*& originalHead) {
         playlist.stream = stoi(value);
         getline(ss, playlist.language, ',');
 
-        Node* newNode = new Node(playlist);
+        auto newNode = new Node(playlist);
 
         if (!head) {
             head = newNode;
@@ -132,7 +130,7 @@ string truncateText(const string& text, const size_t maxLength = 37){
     return text;
 }
 
-void displayPlaylists(Node* head, int limit = 100){
+void displayPlaylists(const Node* head, const int limit = 100){
     cout << left
         << setw(10) << "Song ID"
         << setw(40) << "Title"
@@ -150,17 +148,18 @@ void displayPlaylists(Node* head, int limit = 100){
     int count = 0;
 
     while (current && count < limit){
-        const auto& p = current->data;
-        cout << setw(10) << p.song_id
-            << setw(40) << truncateText(p.song_title)
-            << setw(30) << truncateText(p.artist)
-            << setw(30) << truncateText(p.album)
-            << setw(15) << truncateText(p.genre)
-            << setw(15) << p.release_date
-            << setw(10) << p.duration
-            << setw(15) << p.popularity
-            << setw(10) << p.stream
-            << setw(10) << p.language << endl;
+        const auto&[song_id, song_title, artist, album, genre,
+            release_date, duration, popularity, stream, language] = current->data;
+        cout << setw(10) << song_id
+            << setw(40) << truncateText(song_title)
+            << setw(30) << truncateText(artist)
+            << setw(30) << truncateText(album)
+            << setw(15) << truncateText(genre)
+            << setw(15) << release_date
+            << setw(10) << duration
+            << setw(15) << popularity
+            << setw(10) << stream
+            << setw(10) << language << endl;
 
         current = current->next;
         ++count;
@@ -483,7 +482,6 @@ void searchSubMenu(Node* head) {
         string artistSearchTarget[100];
         int searchType;//Binary search or Jump search
 
-
         cout << "\n========== Search Menu ==========\n";
         cout << "1. Search by Title\n"; // Placeholder for search by title
         cout << "2. Search by Artist\n"; // Placeholder for search by artist
@@ -511,8 +509,7 @@ void searchSubMenu(Node* head) {
     }
 }
 
-
-// NAQIIBBB PART
+// NAQIB PART
 // Function placeholders for additional functions sub-functions
 void additionalFunctionsSubMenu(Node* head) {
     while (true) {

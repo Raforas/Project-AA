@@ -1,4 +1,4 @@
-# Install script for directory: D:/Documents/Utem's Works/#Year2Sem1/BITP2113 ALGORITHM ANALYSIS/Project AA
+# Install script for directory: D:/User/Documents/Degree/Year 1 Sem 1/Algorithm Analysis/Project
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,7 +34,7 @@ endif()
 
 # Set path to fallback-tool for dependency-resolution.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "C:/Program Files/JetBrains/CLion 2024.3.1.1/bin/mingw/bin/objdump.exe")
+  set(CMAKE_OBJDUMP "D:/User/Documents/Programming/Dev C++/CLion 2024.3.1.1/bin/mingw/bin/objdump.exe")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -52,6 +52,6 @@ endif()
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-  file(WRITE "D:/Documents/Utem's Works/#Year2Sem1/BITP2113 ALGORITHM ANALYSIS/Project AA/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "D:/User/Documents/Degree/Year 1 Sem 1/Algorithm Analysis/Project/cmake-build-debug/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
