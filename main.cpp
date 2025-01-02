@@ -64,7 +64,7 @@ Node* readCsv(const string& filename){
         playlist.stream = stoi(value);
         getline(ss, playlist.language, ',');
 
-        Node* newNode = new Node(playlist);
+        auto newNode = new Node(playlist);
 
         if (!head){
             head = newNode;
@@ -86,7 +86,7 @@ string truncateText(const string& text, const size_t maxLength = 100){
     return text;
 }
 
-void displayPlaylists(Node* head, int limit = 100){
+void displayPlaylists(const Node* head, const int limit = 100){
     cout << left
         << setw(10) << "Song ID"
         << setw(40) << "Title"
@@ -408,12 +408,31 @@ void displayMenu(){
     cout << "Enter your choice: ";
 }
 
-// Function placeholders for search sub-functions
-// MANBILLL PART
+// MANBIL
+void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//insert data from file into string array
+    fin.open(filename);
+
+    if (fin.is_open()) {
+        int i = 0;
+        string line; // Temporary variable to store each line
+        while (getline(fin, line)) { // Use getline to read up to the newline character
+            arr[i] = line;  // Store the line into the array
+            i++;
+        }
+    }
+    fin.close();
+}
+
 void searchSubMenu(Node* head) {
     while (true) {
+        ifstream fin;
+        string titleSearchTarget[100];
+        string artistSearchTarget[100];
+        int searchType;//Binary search or Jump search
+
+
         cout << "\n========== Search Menu ==========\n";
-        cout << "1. Search by Title\n";  // Placeholder for search by title
+        cout << "1. Search by Title\n"; // Placeholder for search by title
         cout << "2. Search by Artist\n"; // Placeholder for search by artist
         cout << "3. Back to Main Menu\n";
         cout << "Enter your choice: ";
@@ -422,19 +441,22 @@ void searchSubMenu(Node* head) {
 
         switch (choice) {
             case 1:
-                cout << "Search by Title selected. Functionality to be implemented.\n";
+                cout << "Search by Title selected.\n";
+                insertIntoArray(titleSearchTarget, fin, "../target_search_title.txt");
+                cout << titleSearchTarget[0] << endl;
                 break;
             case 2:
                 cout << "Search by Artist selected. Functionality to be implemented.\n";
+                insertIntoArray(artistSearchTarget, fin, "../target_search_artist.txt");
                 break;
             case 3:
                 return; // Return to the main menu
             default:
                 cout << "Invalid choice. Please try again.\n";
         }
+        fin.close();
     }
 }
-
 
 // NAQIIBBB PART
 // Function placeholders for additional functions sub-functions
@@ -450,19 +472,19 @@ void additionalFunctionsSubMenu(Node* head) {
         cin >> choice;
 
         switch (choice) {
-        case 1:
-            cout << "Additional Function 1 selected. Functionality to be implemented.\n";
-            break;
-        case 2:
-            cout << "Additional Function 2 selected. Functionality to be implemented.\n";
-            break;
-        case 3:
-            cout << "Additional Function 3 selected. Functionality to be implemented.\n";
-            break;
-        case 4:
-            return; // Return to the main menu
-        default:
-            cout << "Invalid choice. Please try again.\n";
+            case 1:
+                cout << "Additional Function 1 selected. Functionality to be implemented.\n";
+                break;
+            case 2:
+                cout << "Additional Function 2 selected. Functionality to be implemented.\n";
+                break;
+            case 3:
+                cout << "Additional Function 3 selected. Functionality to be implemented.\n";
+                break;
+            case 4:
+                return; // Return to the main menu
+            default:
+                cout << "Invalid choice. Please try again.\n";
         }
     }
 }
@@ -478,23 +500,23 @@ int main() {
         cin >> choice;
 
         switch (choice) {
-        case 1:
-            displayPlaylists(head); // Call existing display functionality
-            break;
-        case 2:
-            sortMenu(head); // Call existing sort functionality
-            break;
-        case 3:
-            searchSubMenu(head); // Call search submenu
-            break;
-        case 4:
-            additionalFunctionsSubMenu(head); // Call additional functions submenu
-            break;
-        case 5:
-            cout << "Exiting program. Goodbye!\n";
-            return 0;
-        default:
-            cout << "Invalid choice. Please try again.\n";
+            case 1:
+                displayPlaylists(head); // Call existing display functionality
+                break;
+            case 2:
+                sortMenu(head); // Call existing sort functionality
+                break;
+            case 3:
+                searchSubMenu(head); // Call search submenu
+                break;
+            case 4:
+                additionalFunctionsSubMenu(head); // Call additional functions submenu
+                break;
+            case 5:
+                cout << "Exiting program. Goodbye!\n";
+                return 0;
+            default:
+                cout << "Invalid choice. Please try again.\n";
         }
     }
 }
