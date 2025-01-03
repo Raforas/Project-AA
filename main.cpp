@@ -642,13 +642,97 @@ void searchSubMenu(const Node* head) {
         fin.close();
     }
 }
+// Function to extract the year from a release date (YYYY-MM-DD)
+int extractYear(const string& release_date) {
+    if (release_date.length() >= 4) {
+        return stoi(release_date.substr(0, 4));  // First 4 chars are the year
+    }
+    return 0;  // Invalid date format
+}
+
+// Function to calculate total playlist duration and display results
+void calculateTotalPlaylistDurationForYears(const Node* head) {
+    const int MAX_YEARS = 100;
+    int years[MAX_YEARS];           // Array to store unique years
+    int durations[MAX_YEARS] = {0}; // Array to store total durations for each year
+    int yearCount = 0;              // Track the number of unique years
+    int totalDuration = 0;          // Total duration across all songs in the playlist dataset
+
+    const Node* current = head;
+
+    // Step 1: Traverse the linked list
+    while (current) {
+        int year = extractYear(current->data.release_date); // Extract year from release_date
+        totalDuration += current->data.duration;            // Add song duration to total
+
+        // Check if the current year already exists in `years` array
+        bool yearFound = false;
+        for (int i = 0; i < yearCount; i++) {
+            if (years[i] == year) {
+                durations[i] += current->data.duration; // Add duration to the corresponding year
+                yearFound = true;
+                break;
+            }
+        }
+
+        // If the year is not found, add it to the `years` array
+        if (!yearFound) {
+            years[yearCount] = year;
+            durations[yearCount] = current->data.duration;
+            yearCount++;
+        }
+
+        current = current->next; // Move to the next node
+    }
+
+    // Step 2: Sort years and durations in descending order using Bubble Sort
+    for (int i = 0; i < yearCount - 1; i++) {
+        for (int j = 0; j < yearCount - i - 1; j++) {
+            if (years[j] < years[j + 1]) {
+                // Swap years
+                int tempYear = years[j];
+                years[j] = years[j + 1];
+                years[j + 1] = tempYear;
+
+                // Swap durations
+                int tempDuration = durations[j];
+                durations[j] = durations[j + 1];
+                durations[j + 1] = tempDuration;
+            }
+        }
+    }
+
+    // Step 3: Display Results
+    cout << "\nYearly Total Playlist Duration:\n";
+    cout << left << setw(10) << "Year"
+         << setw(15) << "Duration (H:M)"
+         << "Percentage (%)\n";
+    cout << string(40, '-') << endl;
+
+    for (int i = 0; i < yearCount; i++) {
+        // Hours and minutes for the year
+        int hours = durations[i] / 3600;      // Convert seconds to hours
+        int minutes = (durations[i] % 3600) / 60;   // Remaining seconds converted to minutes
+        double percentage = (double)durations[i] / totalDuration * 100;
+
+        // Display year, duration in 'H:M' format, and percentage
+        cout << setw(10) << years[i]
+             << setw(15) << (to_string(hours) + "h " + to_string(minutes) + "m")
+             << fixed << setprecision(2) << percentage << "%\n";
+    }
+
+    // Step 4: Display Total Playlist Duration
+    int totalHours = totalDuration / 3600;         // Total seconds to hours
+    int totalMinutes = (totalDuration % 3600) / 60; // Remaining seconds to minutes
+    cout << "\nTotal Playlist Duration: " << totalHours << "h " << totalMinutes << "m\n";
+}
 
 // NAQIB PART
 // Function placeholders for additional functions sub-functions
 void additionalFunctionsSubMenu(Node* head) {
     while (true) {
         cout << "\n========== Additional Functions Menu ==========\n";
-        cout << "1. Additional Function 1\n"; // Placeholder for the first additional function
+        cout << "1. Calculate Total Playlist Duration Per Year\n"; // Placeholder for the first additional function
         cout << "2. Additional Function 2\n"; // Placeholder for the second additional function
         cout << "3. Additional Function 2\n"; // Placeholder for the second additional function
         cout << "4. Back to Main Menu\n";
@@ -658,8 +742,8 @@ void additionalFunctionsSubMenu(Node* head) {
 
         switch (choice) {
             case 1:
-                cout << "Additional Function 1 selected. Functionality to be implemented.\n";
-                break;
+                calculateTotalPlaylistDurationForYears(head);
+            break;
             case 2:
                 cout << "Additional Function 2 selected. Functionality to be implemented.\n";
                 break;
