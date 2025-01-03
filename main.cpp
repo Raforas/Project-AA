@@ -642,6 +642,7 @@ void searchSubMenu(const Node* head) {
         fin.close();
     }
 }
+
 // Function to extract the year from a release date (YYYY-MM-DD)
 int extractYear(const string& release_date) {
     if (release_date.length() >= 4) {
