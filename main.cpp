@@ -966,6 +966,7 @@ int main() {
                 break;
             case 5:
                 cout << "Exiting program. Goodbye!\n";
+                delete(head);
                 return 0;
             default:
                 cout << "Invalid choice. Please try again.\n";
