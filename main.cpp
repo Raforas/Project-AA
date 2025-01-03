@@ -9,11 +9,6 @@
 #include <utility>
 using namespace std;
 
-long long globalSwapCount = 0; // Global counter to track swaps during sorting
-long long globalTotalMs = 0; // Global variable to track sorting duration in milliseconds
-long long globalStartTimeMs = 0; // Global start time in milliseconds
-long long globalEndTimeMs = 0; // Global end time in milliseconds
-
 struct Playlist {
     string song_id;
     string song_title;
@@ -49,8 +44,8 @@ string toLower(const string& str) {// Function to convert a string to lowercase
 }
 
 bool contains(const string& str, const string& query) {// Comparator to check if a string contains the query (case-insensitive)
-    string lowerStr = toLower(str);
-    string lowerQuery = toLower(query);
+    const string lowerStr = toLower(str);
+    const string lowerQuery = toLower(query);
     return lowerStr.find(lowerQuery) != string::npos;
 }
 
@@ -60,24 +55,30 @@ string erase(const string& str, const char c) {// Function to remove a character
     return newStr;
 }
 
-auto start = chrono::high_resolution_clock::now();
+long long globalSwapCount = 0; // Global counter to track swaps during sorting
+long long globalTotalMs = 0; // Global variable to track sorting duration in milliseconds
+long long globalStartTimeMs = 0; // Global start time in milliseconds
+long long globalEndTimeMs = 0; // Global end time in milliseconds
+chrono::system_clock::time_point startTime, endTime;
+chrono::duration<double> elapsed;
+
 void startTimer() {
+    startTime = chrono::high_resolution_clock::now();
     globalStartTimeMs = 0;
-    globalStartTimeMs = chrono::duration_cast<chrono::milliseconds>(start.time_since_epoch()).count();
+    globalStartTimeMs = chrono::duration_cast<chrono::milliseconds>(startTime.time_since_epoch()).count();
 }
 
-chrono::duration<double> elapsed;
 void endTimer() {
-    auto end = chrono::high_resolution_clock::now();
-    globalEndTimeMs = chrono::duration_cast<chrono::milliseconds>(end.time_since_epoch()).count();
-    elapsed = end - start;
+    endTime = chrono::high_resolution_clock::now();
+    globalEndTimeMs = chrono::duration_cast<chrono::milliseconds>(endTime.time_since_epoch()).count();
+    elapsed = endTime - startTime;
 }
 
 // Function Declarations
 void displayPlaylistHeader();
 void displayPlaylists(const Node*, int);
 void displaySortingResults(const string&, const string&, const string&);
-void displaySearchingResults(const string&);
+void displaySearchingResults(const string&, const string&);
 
 Node* deepCopyList(const Node* head) {
     if (!head) return nullptr;
@@ -305,9 +306,9 @@ Node* getSortedHead(const Node* head, const function<bool(const Playlist&, const
 }
 
 // Function to get the middle node
-Node* getMid(Node* start, Node* end) {
+Node* getMid(Node* start, const Node* end) {
     Node* slow = start;
-    Node* fast = start;
+    const Node* fast = start;
 
     while (fast != end && fast->next != end) {
         slow = slow->next;
@@ -321,18 +322,16 @@ Node* getMid(Node* start, Node* end) {
 void binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator, const int i,
                   const bool limitOutput, const int limit = 5) {
     Node* start = head;
-    Node* end = nullptr;
+    const Node* end = nullptr;
     bool matchFound = false;
     int count = 0; // Tracks the number of results displayed
 
     while (start != end) {
-        Node* mid = getMid(start, end);
+        const Node* mid = getMid(start, end);
 
         if (!mid) break;
 
-        int compResult = comparator(mid->data, query);
-
-        if (compResult == 0) {
+        if (const int compResult = comparator(mid->data, query); compResult == 0) {
             // Match found
             cout << "Match found at index [" << i << "]" << endl;
             displayPlaylistHeader();
@@ -341,7 +340,7 @@ void binarySearch(Node* head, const string& query, const function<int(const Play
             count++;
 
             // Search for matches on the right side
-            Node* temp = mid->next;
+            const Node* temp = mid->next;
             while (temp && comparator(temp->data, query) == 0) {
                 if (limitOutput && count >= limit) break; // Limit the output if required
                 displayPlaylists(temp, 1);
@@ -389,7 +388,7 @@ void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//inse
     fin.close();
 }
 
-void searchSubMenu(Node* head) {
+void searchSubMenu(const Node* head) {
     while (true) {
         ifstream fin;
         string titleSearchTarget[100];
@@ -399,12 +398,6 @@ void searchSubMenu(Node* head) {
         string languageSearchTarget[100];
         int searchType;//Binary search or Ternary search
         string algorithmName;
-
-        cout << "1. Binary Search" << endl;
-        cout << "2. Ternary Search" << endl;
-        cout << "Select Search Type: ";
-        cin >> searchType;
-        algorithmName = (searchType == 1) ? "Binary Search" : "Ternary Search";
 
         cout << "\n========== Search Menu ==========\n";
         cout << "1. Search by Title\n";
@@ -416,6 +409,16 @@ void searchSubMenu(Node* head) {
         cout << "Enter your choice: ";
         int choice;
         cin >> choice;
+
+        if (choice == 6) {
+            return; // Return to the main menu
+        }
+
+        cout << "1. Binary Search" << endl;
+        cout << "2. Ternary Search" << endl;
+        cout << "Select Search Type: ";
+        cin >> searchType;
+        algorithmName = (searchType == 1) ? "Binary Search" : "Ternary Search";
 
         Node* sortedHead = nullptr;
         switch (choice) {
@@ -441,7 +444,7 @@ void searchSubMenu(Node* head) {
                 }
                 endTimer();
                 globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
-                displaySearchingResults(algorithmName);
+                displaySearchingResults(algorithmName, "Title");
                 break;
             case 2:
                 cout << "Search by Artist selected.\n";
@@ -467,7 +470,7 @@ void searchSubMenu(Node* head) {
                 }
                 endTimer();
                 globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
-                displaySearchingResults(algorithmName);
+                displaySearchingResults(algorithmName, "Artist");
                 break;
             case 3:
                 cout << "Search by Album selected.\n";
@@ -493,7 +496,7 @@ void searchSubMenu(Node* head) {
                 }
                 endTimer();
                 globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
-                displaySearchingResults(algorithmName);
+                displaySearchingResults(algorithmName, "Album");
                 break;
             case 4:
                 cout << "Search by Genre selected.\n";
@@ -519,7 +522,7 @@ void searchSubMenu(Node* head) {
                 }
                 endTimer();
                 globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
-                displaySearchingResults(algorithmName);
+                displaySearchingResults(algorithmName, "Genre");
                 break;
             case 5:
                 cout << "Search by Language selected.\n";
@@ -543,10 +546,8 @@ void searchSubMenu(Node* head) {
                 }
                 endTimer();
                 globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
-                displaySearchingResults(algorithmName);
+                displaySearchingResults(algorithmName, "Language");
                 break;
-            case 6:
-                return; // Return to the main menu
             default:
                 cout << "Invalid choice. Please try again.\n";
         }
@@ -749,9 +750,10 @@ void displaySortingResults(const string& algorithmName, const string& sortOrder,
     cout << "=====================================\n";
 }
 
-void displaySearchingResults(const string& algorithmName){// function to display searching results
+void displaySearchingResults(const string& algorithmName, const string& searchBy){// function to display searching results
     cout << "\n========== SEARCHING RESULTS ==========\n";
     cout << "Algorithm    : " << algorithmName << endl;
+    cout << "Search by    : " << searchBy << endl;
     cout << "-------------------------------------\n";
     cout << "Start Time   : " << globalStartTimeMs << " milliseconds\n";
     cout << "End Time     : " << globalEndTimeMs << " milliseconds\n";
