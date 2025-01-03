@@ -10,9 +10,9 @@
 using namespace std;
 
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
-long long globalSortTimeMs = 0; // Global variable to track sorting duration in milliseconds
-long long globalSortStartTimeMs = 0; // Global start time in milliseconds
-long long globalSortEndTimeMs = 0; // Global end time in milliseconds
+long long globalTotalMs = 0; // Global variable to track sorting duration in milliseconds
+long long globalStartTimeMs = 0; // Global start time in milliseconds
+long long globalEndTimeMs = 0; // Global end time in milliseconds
 
 struct Playlist {
     string song_id;
@@ -54,10 +54,30 @@ bool contains(const string& str, const string& query) {// Comparator to check if
     return lowerStr.find(lowerQuery) != string::npos;
 }
 
+string erase(const string& str, const char c) {// Function to remove a character from a string
+    string newStr = str;
+    newStr.erase(ranges::remove(newStr, c).begin(), newStr.end());
+    return newStr;
+}
+
+auto start = chrono::high_resolution_clock::now();
+void startTimer() {
+    globalStartTimeMs = 0;
+    globalStartTimeMs = chrono::duration_cast<chrono::milliseconds>(start.time_since_epoch()).count();
+}
+
+chrono::duration<double> elapsed;
+void endTimer() {
+    auto end = chrono::high_resolution_clock::now();
+    globalEndTimeMs = chrono::duration_cast<chrono::milliseconds>(end.time_since_epoch()).count();
+    elapsed = end - start;
+}
+
 // Function Declarations
 void displayPlaylistHeader();
 void displayPlaylists(const Node*, int);
 void displaySortingResults(const string&, const string&, const string&);
+void displaySearchingResults(const string&);
 
 Node* deepCopyList(const Node* head) {
     if (!head) return nullptr;
@@ -298,10 +318,12 @@ Node* getMid(Node* start, Node* end) {
 }
 
 // Binary Search Implementation
-void binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator, int i) {
+void binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator, const int i,
+                  const bool limitOutput, const int limit = 5) {
     Node* start = head;
     Node* end = nullptr;
     bool matchFound = false;
+    int count = 0; // Tracks the number of results displayed
 
     while (start != end) {
         Node* mid = getMid(start, end);
@@ -311,36 +333,42 @@ void binarySearch(Node* head, const string& query, const function<int(const Play
         int compResult = comparator(mid->data, query);
 
         if (compResult == 0) {
-            // Print the matched result
-            cout << "Target found at index [" << i << "]" << endl;
+            // Match found
+            cout << "Match found at index [" << i << "]" << endl;
             displayPlaylistHeader();
-            displayPlaylists(mid, 1);
+            displayPlaylists(mid, 1); // Display the match
             matchFound = true;
+            count++;
 
-            // Search for additional matches on both sides
+            // Search for matches on the right side
             Node* temp = mid->next;
             while (temp && comparator(temp->data, query) == 0) {
+                if (limitOutput && count >= limit) break; // Limit the output if required
                 displayPlaylists(temp, 1);
                 temp = temp->next;
+                count++;
             }
 
-            cout << endl;
-
+            // Search for matches on the left side
             temp = start;
             while (temp && temp != mid) {
                 if (comparator(temp->data, query) == 0) {
+                    if (limitOutput && count >= limit) break; // Limit the output if required
                     displayPlaylists(temp, 1);
+                    count++;
                 }
                 temp = temp->next;
             }
 
-            break; // Exit the binary search once all matches are found
+            break; // Exit the binary search loop after finding all matches
         } else if (compResult < 0) {
-            start = mid->next; // Search right half
+            start = mid->next; // Search on the right
         } else {
-            end = mid; // Search left half
+            end = mid; // Search on the left
         }
     }
+
+    string algorithmName = "Binary Search";
 
     if (!matchFound) {
         cout << "No match found for the query '" << query << "'.\n";
@@ -369,7 +397,14 @@ void searchSubMenu(Node* head) {
         string albumSearchTarget[100];
         string genreSearchTarget[100];
         string languageSearchTarget[100];
-        int searchType;//Binary search or Jump search
+        int searchType;//Binary search or Ternary search
+        string algorithmName;
+
+        cout << "1. Binary Search" << endl;
+        cout << "2. Ternary Search" << endl;
+        cout << "Select Search Type: ";
+        cin >> searchType;
+        algorithmName = (searchType == 1) ? "Binary Search" : "Ternary Search";
 
         cout << "\n========== Search Menu ==========\n";
         cout << "1. Search by Title\n";
@@ -392,14 +427,21 @@ void searchSubMenu(Node* head) {
                         return toLower(a.song_title) < toLower(b.song_title);
                 });
 
+                startTimer();
                 for (int i = 0; i < 100; i++) {
                     cout << "Search Target " << (i + 1) << ": " << titleSearchTarget[i] << endl;
-                    binarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& query) {
-                        return contains(p.song_title, query) ? 0 : (toLower(p.song_title) < toLower(query) ? -1 : 1);
-                    }, i);
+                    if (algorithmName == "Binary Search") {
+                        binarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.song_title, query) ? 0 : (toLower(p.song_title) < toLower(query) ? -1 : 1);
+                        }, i, false);
+                    } else if (algorithmName == "Ternary Search") {
 
+                    }
                     cout << endl;
                 }
+                endTimer();
+                globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
+                displaySearchingResults(algorithmName);
                 break;
             case 2:
                 cout << "Search by Artist selected.\n";
@@ -409,14 +451,23 @@ void searchSubMenu(Node* head) {
                     return toLower(a.artist) < toLower(b.artist);
                 });
 
+                startTimer();
                 for (int i = 0; i < 100; i++) {
                     cout << "Search Target " << (i + 1) << ": " << artistSearchTarget[i] << endl;
-                    binarySearch(sortedHead, artistSearchTarget[i], [](const Playlist& p, const string& query) {
-                        return contains(p.artist, query) ? 0 : (toLower(p.artist) < toLower(query) ? -1 : 1);
-                    }, i);
+                    if (algorithmName == "Binary Search") {
+                        binarySearch(sortedHead, artistSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.artist, query) ? 0 : (toLower(p.artist) < toLower(query) ? -1 : 1);
+                        }, i, false);
+                    } else if (algorithmName == "Ternary Search") {
+
+                    }
+
 
                     cout << endl;
                 }
+                endTimer();
+                globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
+                displaySearchingResults(algorithmName);
                 break;
             case 3:
                 cout << "Search by Album selected.\n";
@@ -426,14 +477,23 @@ void searchSubMenu(Node* head) {
                     return toLower(a.album) < toLower(b.album);
                 });
 
+                startTimer();
                 for (int i = 0; i < 100; i++) {
                     cout << "Search Target " << (i + 1) << ": " << albumSearchTarget[i] << endl;
-                    binarySearch(sortedHead, albumSearchTarget[i], [](const Playlist& p, const string& query) {
-                        return contains(p.album, query) ? 0 : (toLower(p.album) < toLower(query) ? -1 : 1);
-                    }, i);
+                    if (algorithmName == "Binary Search") {
+                        binarySearch(sortedHead, albumSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return toLower(erase(p.album, '.')) == toLower(query) ? 0 : (toLower(p.album) < toLower(query) ? -1 : 1);
+                        }, i, false);
+                    } else if (algorithmName == "Ternary Search") {
+
+                    }
+
 
                     cout << endl;
                 }
+                endTimer();
+                globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
+                displaySearchingResults(algorithmName);
                 break;
             case 4:
                 cout << "Search by Genre selected.\n";
@@ -443,14 +503,23 @@ void searchSubMenu(Node* head) {
                     return toLower(a.genre) < toLower(b.genre);
                 });
 
+                startTimer();
                 for (int i = 0; i < 100; i++) {
                     cout << "Search Target " << (i + 1) << ": " << genreSearchTarget[i] << endl;
-                    binarySearch(sortedHead, genreSearchTarget[i], [](const Playlist& p, const string& query) {
-                        return contains(p.genre, query) ? 0 : (toLower(p.genre) < toLower(query) ? -1 : 1);
-                    }, i);
+                    if (algorithmName == "Binary Search") {
+                        binarySearch(sortedHead, genreSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.genre, query) ? 0 : (toLower(p.genre) < toLower(query) ? -1 : 1);
+                        }, i, true, 5); // Limit output to 5 results
+                    } else if (algorithmName == "Ternary Search") {
+
+                    }
+
 
                     cout << endl;
                 }
+                endTimer();
+                globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
+                displaySearchingResults(algorithmName);
                 break;
             case 5:
                 cout << "Search by Language selected.\n";
@@ -460,14 +529,21 @@ void searchSubMenu(Node* head) {
                     return toLower(a.language) < toLower(b.language);
                 });
 
+                startTimer();
                 for (int i = 0; i < 100; i++) {
                     cout << "Search Target " << (i + 1) << ": " << languageSearchTarget[i] << endl;
-                    binarySearch(sortedHead, languageSearchTarget[i], [](const Playlist& p, const string& query) {
-                        return contains(p.language, query) ? 0 : (toLower(p.language) < toLower(query) ? -1 : 1);
-                    }, i);
+                    if (algorithmName == "Binary Search") {
+                        binarySearch(sortedHead, languageSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.language, query) ? 0 : (toLower(p.language) < toLower(query) ? -1 : 1);
+                        }, i, true, 5);// limits to 5 results only
+                    } else if (algorithmName == "Ternary Search") {
 
+                    }
                     cout << endl;
                 }
+                endTimer();
+                globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
+                displaySearchingResults(algorithmName);
                 break;
             case 6:
                 return; // Return to the main menu
@@ -632,32 +708,23 @@ void sortMenu(Node*& head, const Node* originalHead) {
         head = deepCopyList(originalHead);
 
         if (algoChoice == 1) {
-            auto start = chrono::high_resolution_clock::now();
-            globalSortStartTimeMs = chrono::duration_cast<chrono::milliseconds>(start.time_since_epoch()).count();
+            startTimer();
 
             head = mergeSort(head, comparator, swapCount);
 
-            auto end = chrono::high_resolution_clock::now();
-            globalSortEndTimeMs = chrono::duration_cast<chrono::milliseconds>(end.time_since_epoch()).count();
-            chrono::duration<double> elapsed = end - start;
-
+            endTimer();
             globalSwapCount = swapCount;
-            globalSortTimeMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
+            globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
 
             algorithmName = "Merge Sort";
         } else if (algoChoice == 2) {
-
-            auto start = chrono::high_resolution_clock::now();
-            globalSortStartTimeMs = chrono::duration_cast<chrono::milliseconds>(start.time_since_epoch()).count();
+            startTimer();
 
             head = quickSort(head, comparator, swapCount);
 
-            auto end = chrono::high_resolution_clock::now();
-            globalSortEndTimeMs = chrono::duration_cast<chrono::milliseconds>(end.time_since_epoch()).count();
-            chrono::duration<double> elapsed = end - start;
-
+            endTimer();
             globalSwapCount = swapCount;
-            globalSortTimeMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
+            globalTotalMs = chrono::duration_cast<chrono::milliseconds>(elapsed).count();
 
             algorithmName = "Quick Sort";
         }
@@ -676,9 +743,19 @@ void displaySortingResults(const string& algorithmName, const string& sortOrder,
     cout << "Sorted By    : " << sortBy << endl;
     cout << "-------------------------------------\n";
     cout << "Total Swaps  : " << globalSwapCount << endl;
-    cout << "Start Time   : " << globalSortStartTimeMs << " milliseconds\n";
-    cout << "End Time     : " << globalSortEndTimeMs << " milliseconds\n";
-    cout << "Elapsed Time : " << globalSortTimeMs << " milliseconds\n";
+    cout << "Start Time   : " << globalStartTimeMs << " milliseconds\n";
+    cout << "End Time     : " << globalEndTimeMs << " milliseconds\n";
+    cout << "Elapsed Time : " << globalTotalMs << " milliseconds\n";
+    cout << "=====================================\n";
+}
+
+void displaySearchingResults(const string& algorithmName){// function to display searching results
+    cout << "\n========== SEARCHING RESULTS ==========\n";
+    cout << "Algorithm    : " << algorithmName << endl;
+    cout << "-------------------------------------\n";
+    cout << "Start Time   : " << globalStartTimeMs << " milliseconds\n";
+    cout << "End Time     : " << globalEndTimeMs << " milliseconds\n";
+    cout << "Elapsed Time : " << globalTotalMs << " milliseconds\n";
     cout << "=====================================\n";
 }
 
