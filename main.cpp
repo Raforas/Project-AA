@@ -374,6 +374,55 @@ void binarySearch(Node* head, const string& query, const function<int(const Play
     }
 }
 
+void ternarySearchRecursive(Node* start, Node* end, const string& query, const function<int(const Playlist&, const string&)>& comparator,
+                            int& count, const int i, const bool limitOutput, const int limit) {
+    if (!start || start == end || count >= limit) {
+        return; // Base case: stop if the range is invalid or the limit is reached
+    }
+
+    // Find midpoints
+    Node* mid1 = getMid(start, end);
+    Node* mid2 = mid1 ? getMid(mid1->next, end) : nullptr;
+
+    if (mid1 && comparator(mid1->data, query) == 0) {// Check for matches
+        cout << "Match found at index [" << i << "] (Mid1)\n";
+        displayPlaylistHeader();
+        displayPlaylists(mid1, 1);
+        count++;
+        if (limitOutput && count >= limit) return;
+    }
+
+    if (mid2 && comparator(mid2->data, query) == 0) {
+        cout << "Match found at index [" << i << "] (Mid2)\n";
+        displayPlaylistHeader();
+        displayPlaylists(mid2, 1);
+        count++;
+        if (limitOutput && count >= limit) return;
+    }
+
+    // Recursive narrowing of search space
+    if (mid1 && comparator(mid1->data, query) > 0) {
+        // Search the left segment
+        ternarySearchRecursive(start, mid1, query, comparator, count, i, limitOutput, limit);
+    } else if (mid2 && comparator(mid2->data, query) < 0) {
+        // Search the right segment
+        ternarySearchRecursive(mid2->next, end, query, comparator, count, i, limitOutput, limit);
+    } else {
+        // Search the middle segment
+        ternarySearchRecursive(mid1 ? mid1->next : nullptr, mid2, query, comparator, count, i, limitOutput, limit);
+    }
+}
+
+void ternarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator,
+                   const int i, const bool limitOutput, const int limit = 5) {
+    int count = 0; // Counter to track the number of results displayed
+    ternarySearchRecursive(head, nullptr, query, comparator, count, i, limitOutput, limit);
+
+    if (count == 0) {
+        cout << "No match found for the query '" << query << "'.\n";
+    }
+}
+
 void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//insert data from file into string array
     fin.open(filename);
 
@@ -432,13 +481,15 @@ void searchSubMenu(const Node* head) {
 
                 startTimer();
                 for (int i = 0; i < 100; i++) {
-                    cout << "Search Target " << (i + 1) << ": " << titleSearchTarget[i] << endl;
+                    cout << "Search Target " << i + 1 << ": " << titleSearchTarget[i] << endl;
                     if (algorithmName == "Binary Search") {
                         binarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.song_title, query) ? 0 : (toLower(p.song_title) < toLower(query) ? -1 : 1);
                         }, i, false);
                     } else if (algorithmName == "Ternary Search") {
-
+                        ternarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.song_title, query) ? 0 : (toLower(p.song_title) < toLower(query) ? -1 : 1);
+                        }, i, true, 5);
                     }
                     cout << endl;
                 }
@@ -462,10 +513,10 @@ void searchSubMenu(const Node* head) {
                             return contains(p.artist, query) ? 0 : (toLower(p.artist) < toLower(query) ? -1 : 1);
                         }, i, false);
                     } else if (algorithmName == "Ternary Search") {
-
+                        ternarySearch(sortedHead, artistSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.artist, query) ? 0 : (toLower(p.artist) < toLower(query) ? -1 : 1);
+                        }, i, true, 5);
                     }
-
-
                     cout << endl;
                 }
                 endTimer();
@@ -488,7 +539,9 @@ void searchSubMenu(const Node* head) {
                             return toLower(erase(p.album, '.')) == toLower(query) ? 0 : (toLower(p.album) < toLower(query) ? -1 : 1);
                         }, i, false);
                     } else if (algorithmName == "Ternary Search") {
-
+                        ternarySearch(sortedHead, albumSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.album, query) ? 0 : (toLower(p.album) < toLower(query) ? -1 : 1);
+                        }, i, true, 5);
                     }
 
 
@@ -514,7 +567,9 @@ void searchSubMenu(const Node* head) {
                             return contains(p.genre, query) ? 0 : (toLower(p.genre) < toLower(query) ? -1 : 1);
                         }, i, true, 5); // Limit output to 5 results
                     } else if (algorithmName == "Ternary Search") {
-
+                        ternarySearch(sortedHead, genreSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.genre, query) ? 0 : (toLower(p.genre) < toLower(query) ? -1 : 1);
+                        }, i, true, 5);
                     }
 
 
@@ -540,7 +595,9 @@ void searchSubMenu(const Node* head) {
                             return contains(p.language, query) ? 0 : (toLower(p.language) < toLower(query) ? -1 : 1);
                         }, i, true, 5);// limits to 5 results only
                     } else if (algorithmName == "Ternary Search") {
-
+                        ternarySearch(sortedHead, languageSearchTarget[i], [](const Playlist& p, const string& query) {
+                            return contains(p.language, query) ? 0 : (toLower(p.language) < toLower(query) ? -1 : 1);
+                        }, i, true, 5);
                     }
                     cout << endl;
                 }
