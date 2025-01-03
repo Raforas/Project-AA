@@ -25,8 +25,13 @@ struct Playlist {
 struct Node {
     Playlist data;
     Node* next;
+    int rowIndex;
 
-    explicit Node(Playlist  playlist) : data(move(playlist)), next(nullptr){}
+    explicit Node(Playlist  playlist) : data(move(playlist)), next(nullptr), rowIndex(0) {}
+
+    // Constructor definition for Node
+    Node(const Playlist& playlist, const int index)
+        : data(playlist), next(nullptr), rowIndex(index) {}
 };
 
 //Utility or global use functions
@@ -83,12 +88,12 @@ void displaySearchingResults(const string&, const string&);
 Node* deepCopyList(const Node* head) {
     if (!head) return nullptr;
 
-    const auto newHead = new Node(head->data);
+    auto* newHead = new Node(head->data, head->rowIndex); // Copy rowIndex
     const Node* current = head->next;
     Node* newCurrent = newHead;
 
     while (current) {
-        newCurrent->next = new Node(current->data);
+        newCurrent->next = new Node(current->data, current->rowIndex); // Copy rowIndex
         newCurrent = newCurrent->next;
         current = current->next;
     }
@@ -107,9 +112,11 @@ Node* readCsv(const string& filename, Node*& originalHead) {
     }
 
     string line;
+    int rowIndex = 0;
     getline(file, line); // Skip header
 
     while (getline(file, line)) {
+        rowIndex++;
         stringstream ss(line);
         Playlist playlist;
         string value;
@@ -128,7 +135,7 @@ Node* readCsv(const string& filename, Node*& originalHead) {
         playlist.stream = stoi(value);
         getline(ss, playlist.language, ',');
 
-        auto newNode = new Node(playlist);
+        auto newNode = new Node(playlist, rowIndex);
 
         if (!head) {
             head = newNode;
@@ -143,7 +150,6 @@ Node* readCsv(const string& filename, Node*& originalHead) {
 
     // Make a deep copy of the original data
     originalHead = deepCopyList(head);
-
     return head;
 }
 
@@ -319,7 +325,7 @@ Node* getMid(Node* start, const Node* end) {
 }
 
 // Binary Search Implementation
-void binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator, const int i,
+bool binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator,
                   const bool limitOutput, const int limit = 5) {
     Node* start = head;
     const Node* end = nullptr;
@@ -333,7 +339,7 @@ void binarySearch(Node* head, const string& query, const function<int(const Play
 
         if (const int compResult = comparator(mid->data, query); compResult == 0) {
             // Match found
-            cout << "Match found at index [" << i << "]" << endl;
+            cout << "Match found at index [" << mid->rowIndex << "]" << endl;
             displayPlaylistHeader();
             displayPlaylists(mid, 1); // Display the match
             matchFound = true;
@@ -371,11 +377,14 @@ void binarySearch(Node* head, const string& query, const function<int(const Play
 
     if (!matchFound) {
         cout << "No match found for the query '" << query << "'.\n";
+        return false;
     }
+
+    return true;
 }
 
 void ternarySearchRecursive(Node* start, Node* end, const string& query, const function<int(const Playlist&, const string&)>& comparator,
-                            int& count, const int i, const bool limitOutput, const int limit) {
+                            int& count, const bool limitOutput, const int limit, bool& headerDisplayed) {
     if (!start || start == end || count >= limit) {
         return; // Base case: stop if the range is invalid or the limit is reached
     }
@@ -384,18 +393,28 @@ void ternarySearchRecursive(Node* start, Node* end, const string& query, const f
     Node* mid1 = getMid(start, end);
     Node* mid2 = mid1 ? getMid(mid1->next, end) : nullptr;
 
-    if (mid1 && comparator(mid1->data, query) == 0) {// Check for matches
-        cout << "Match found at index [" << i << "] (Mid1)\n";
-        displayPlaylistHeader();
-        displayPlaylists(mid1, 1);
+    // Check for mid1 match
+    if (mid1 && comparator(mid1->data, query) == 0) {
+        if (!headerDisplayed) {
+            // Display header before the first match
+            cout << "Match found at node index [" << mid1->rowIndex << "]:" << endl;
+            displayPlaylistHeader();
+            headerDisplayed = true;
+        }
+        displayPlaylists(mid1, 1); // Display only the playlist data
         count++;
         if (limitOutput && count >= limit) return;
     }
 
+    // Check for mid2 match
     if (mid2 && comparator(mid2->data, query) == 0) {
-        cout << "Match found at index [" << i << "] (Mid2)\n";
-        displayPlaylistHeader();
-        displayPlaylists(mid2, 1);
+        if (!headerDisplayed) {
+            // Display header before the first match
+            cout << "Match found at node index [" << mid2->rowIndex << "]:" << endl;
+            displayPlaylistHeader();
+            headerDisplayed = true;
+        }
+        displayPlaylists(mid2, 1); // Display only the playlist data
         count++;
         if (limitOutput && count >= limit) return;
     }
@@ -403,24 +422,36 @@ void ternarySearchRecursive(Node* start, Node* end, const string& query, const f
     // Recursive narrowing of search space
     if (mid1 && comparator(mid1->data, query) > 0) {
         // Search the left segment
-        ternarySearchRecursive(start, mid1, query, comparator, count, i, limitOutput, limit);
+        ternarySearchRecursive(start, mid1, query, comparator, count, limitOutput, limit, headerDisplayed);
     } else if (mid2 && comparator(mid2->data, query) < 0) {
         // Search the right segment
-        ternarySearchRecursive(mid2->next, end, query, comparator, count, i, limitOutput, limit);
+        ternarySearchRecursive(mid2->next, end, query, comparator, count, limitOutput, limit, headerDisplayed);
     } else {
         // Search the middle segment
-        ternarySearchRecursive(mid1 ? mid1->next : nullptr, mid2, query, comparator, count, i, limitOutput, limit);
+        ternarySearchRecursive(mid1 ? mid1->next : nullptr, mid2, query, comparator, count, limitOutput, limit, headerDisplayed);
     }
 }
 
-void ternarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator,
+bool ternarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator,
                    const int i, const bool limitOutput, const int limit = 5) {
     int count = 0; // Counter to track the number of results displayed
-    ternarySearchRecursive(head, nullptr, query, comparator, count, i, limitOutput, limit);
+    bool matchFound = false;
 
-    if (count == 0) {
-        cout << "No match found for the query '" << query << "'.\n";
+    // Use a flag to ensure the header is displayed only once
+    bool headerDisplayed = false;
+
+    // Call the recursive helper function
+    ternarySearchRecursive(head, nullptr, query, comparator, count, limitOutput, limit, headerDisplayed);
+
+    if (count > 0) {
+        matchFound = true;
     }
+
+    if (!matchFound) {
+        cout << "No match found for the query '" << query << "'.\n";
+        return false;
+    }
+    return true;
 }
 
 void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//insert data from file into string array
@@ -485,7 +516,7 @@ void searchSubMenu(const Node* head) {
                     if (algorithmName == "Binary Search") {
                         binarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.song_title, query) ? 0 : (toLower(p.song_title) < toLower(query) ? -1 : 1);
-                        }, i, false);
+                        }, false);
                     } else if (algorithmName == "Ternary Search") {
                         ternarySearch(sortedHead, titleSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.song_title, query) ? 0 : (toLower(p.song_title) < toLower(query) ? -1 : 1);
@@ -511,7 +542,7 @@ void searchSubMenu(const Node* head) {
                     if (algorithmName == "Binary Search") {
                         binarySearch(sortedHead, artistSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.artist, query) ? 0 : (toLower(p.artist) < toLower(query) ? -1 : 1);
-                        }, i, false);
+                        }, false);
                     } else if (algorithmName == "Ternary Search") {
                         ternarySearch(sortedHead, artistSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.artist, query) ? 0 : (toLower(p.artist) < toLower(query) ? -1 : 1);
@@ -537,7 +568,7 @@ void searchSubMenu(const Node* head) {
                     if (algorithmName == "Binary Search") {
                         binarySearch(sortedHead, albumSearchTarget[i], [](const Playlist& p, const string& query) {
                             return toLower(erase(p.album, '.')) == toLower(query) ? 0 : (toLower(p.album) < toLower(query) ? -1 : 1);
-                        }, i, false);
+                        }, false);
                     } else if (algorithmName == "Ternary Search") {
                         ternarySearch(sortedHead, albumSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.album, query) ? 0 : (toLower(p.album) < toLower(query) ? -1 : 1);
@@ -565,7 +596,7 @@ void searchSubMenu(const Node* head) {
                     if (algorithmName == "Binary Search") {
                         binarySearch(sortedHead, genreSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.genre, query) ? 0 : (toLower(p.genre) < toLower(query) ? -1 : 1);
-                        }, i, true, 5); // Limit output to 5 results
+                        }, true, 5); // Limit output to 5 results
                     } else if (algorithmName == "Ternary Search") {
                         ternarySearch(sortedHead, genreSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.genre, query) ? 0 : (toLower(p.genre) < toLower(query) ? -1 : 1);
@@ -593,7 +624,7 @@ void searchSubMenu(const Node* head) {
                     if (algorithmName == "Binary Search") {
                         binarySearch(sortedHead, languageSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.language, query) ? 0 : (toLower(p.language) < toLower(query) ? -1 : 1);
-                        }, i, true, 5);// limits to 5 results only
+                        }, true, 5);// limits to 5 results only
                     } else if (algorithmName == "Ternary Search") {
                         ternarySearch(sortedHead, languageSearchTarget[i], [](const Playlist& p, const string& query) {
                             return contains(p.language, query) ? 0 : (toLower(p.language) < toLower(query) ? -1 : 1);
