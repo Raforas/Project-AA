@@ -307,7 +307,7 @@ Node* quickSort(Node* head, auto comparator, long long& swapCount){
 // Binary Search Implementation
 Node* getSortedHead(const Node* head, const function<bool(const Playlist&, const Playlist&)> &comparator) {
     Node* copyList = deepCopyList(head);
-    long long dummySwap = 0;  // Dummy variable for swap count
+    long long dummySwap = 0;  //Dummy variable for swap count
     return mergeSort(copyList, comparator, dummySwap); // Use existing merge sort
 }
 
