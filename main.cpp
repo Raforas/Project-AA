@@ -728,6 +728,40 @@ void calculateTotalPlaylistDurationForYears(const Node* head) {
     cout << "\nTotal Playlist Duration: " << totalHours << "h " << totalMinutes << "m\n";
 }
 
+void searchTotalSongByArtist(const Node* head) {
+    string artistName = "Aaron Johnson";
+
+    int totalSongs = 0; // Counter for the total number of rows with matching artist name
+
+    // Traverse the linked list
+    const Node* current = head;
+    bool headerDisplayed = false;
+
+    while (current) {
+        // Check if the artist name matches
+        if (current->data.artist == artistName) {
+            if (!headerDisplayed) {
+                // Display header before the first match
+                cout << "\nMatching Rows for Artist: " << artistName << endl;
+                displayPlaylistHeader(); // Function to display column headers (implement if needed)
+                headerDisplayed = true;
+            }
+            displayPlaylists(current, 1); // Function to display data of a single node
+            totalSongs++; // Increment the counter for each match
+        }
+        current = current->next; // Move to the next node
+    }
+
+    // Display summary
+    if (totalSongs > 0) {
+        cout << "\nTotal Rows for Artist '" << artistName << "': " << totalSongs << endl;
+    } else {
+        cout << "\nNo rows found for artist: " << artistName << endl;
+    }
+}
+
+
+
 // NAQIB PART
 // Function placeholders for additional functions sub-functions
 void additionalFunctionsSubMenu(Node* head) {
@@ -735,7 +769,7 @@ void additionalFunctionsSubMenu(Node* head) {
         cout << "\n========== Additional Functions Menu ==========\n";
         cout << "1. Calculate Total Playlist Duration Per Year\n"; // Placeholder for the first additional function
         cout << "2. Additional Function 2\n"; // Placeholder for the second additional function
-        cout << "3. Additional Function 2\n"; // Placeholder for the second additional function
+        cout << "3. Calculate Total Songs Sang by Artist\n"; // Placeholder for the second additional function
         cout << "4. Back to Main Menu\n";
         cout << "Enter your choice: ";
         int choice;
@@ -749,7 +783,7 @@ void additionalFunctionsSubMenu(Node* head) {
                 cout << "Additional Function 2 selected. Functionality to be implemented.\n";
                 break;
             case 3:
-                cout << "Additional Function 3 selected. Functionality to be implemented.\n";
+                searchTotalSongByArtist(head);
                 break;
             case 4:
                 return; // Return to the main menu
