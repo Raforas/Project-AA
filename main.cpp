@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <chrono>
 #include <functional> // for function
+#include <map>
 #include <utility>
 using namespace std;
 
@@ -58,6 +59,19 @@ string erase(const string& str, const char c) {// Function to remove a character
     string newStr = str;
     newStr.erase(ranges::remove(newStr, c).begin(), newStr.end());
     return newStr;
+}
+
+string formatWithCommas(const long long number) {
+    string numStr = to_string(number); // Convert the number to a string
+    int insertPosition = numStr.length() - 3; // Start inserting commas after the third-last digit
+
+    // Traverse the string backwards and insert commas
+    while (insertPosition > 0) {
+        numStr.insert(insertPosition, ","); // Insert comma
+        insertPosition -= 3; // Move back 3 positions
+    }
+
+    return numStr;
 }
 
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
@@ -454,7 +468,8 @@ bool ternarySearch(Node* head, const string& query, const function<int(const Pla
     return true;
 }
 
-void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//insert data from file into string array
+void insertIntoArray(string *arr, const string &filename) {//insert data from file into string array
+    ifstream fin;
     fin.open(filename);
 
     if (fin.is_open()) {
@@ -470,7 +485,6 @@ void insertIntoArray(string *arr, ifstream& fin, const string &filename) {//inse
 
 void searchSubMenu(const Node* head) {
     while (true) {
-        ifstream fin;
         string titleSearchTarget[100];
         string artistSearchTarget[100];
         string albumSearchTarget[100];
@@ -504,7 +518,7 @@ void searchSubMenu(const Node* head) {
         switch (choice) {
             case 1:
                 cout << "Search by Title selected.\n\n";
-                insertIntoArray(titleSearchTarget, fin, "../target_search_title.txt");
+                insertIntoArray(titleSearchTarget, "../target_search_title.txt");
 
                 sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
                         return toLower(a.song_title) < toLower(b.song_title);
@@ -530,7 +544,7 @@ void searchSubMenu(const Node* head) {
                 break;
             case 2:
                 cout << "Search by Artist selected.\n";
-                insertIntoArray(artistSearchTarget, fin, "../target_search_artist.txt");
+                insertIntoArray(artistSearchTarget, "../target_search_artist.txt");
 
                 sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
                     return toLower(a.artist) < toLower(b.artist);
@@ -556,7 +570,7 @@ void searchSubMenu(const Node* head) {
                 break;
             case 3:
                 cout << "Search by Album selected.\n";
-                insertIntoArray(albumSearchTarget, fin, "../target_search_album.txt");
+                insertIntoArray(albumSearchTarget, "../target_search_album.txt");
 
                 sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
                     return toLower(a.album) < toLower(b.album);
@@ -584,7 +598,7 @@ void searchSubMenu(const Node* head) {
                 break;
             case 4:
                 cout << "Search by Genre selected.\n";
-                insertIntoArray(genreSearchTarget, fin, "../target_search_genre.txt");
+                insertIntoArray(genreSearchTarget, "../target_search_genre.txt");
 
                 sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
                     return toLower(a.genre) < toLower(b.genre);
@@ -612,7 +626,7 @@ void searchSubMenu(const Node* head) {
                 break;
             case 5:
                 cout << "Search by Language selected.\n";
-                insertIntoArray(languageSearchTarget, fin, "../target_search_language.txt");
+                insertIntoArray(languageSearchTarget, "../target_search_language.txt");
 
                 sortedHead = getSortedHead(head, [](const Playlist& a, const Playlist& b) {
                     return toLower(a.language) < toLower(b.language);
@@ -639,7 +653,6 @@ void searchSubMenu(const Node* head) {
             default:
                 cout << "Invalid choice. Please try again.\n";
         }
-        fin.close();
     }
 }
 
@@ -653,7 +666,7 @@ int extractYear(const string& release_date) {
 
 // Function to calculate total playlist duration and display results
 void calculateTotalPlaylistDurationForYears(const Node* head) {
-    const int MAX_YEARS = 100;
+    constexpr int MAX_YEARS = 100;
     int years[MAX_YEARS];           // Array to store unique years
     int durations[MAX_YEARS] = {0}; // Array to store total durations for each year
     int yearCount = 0;              // Track the number of unique years
@@ -663,7 +676,7 @@ void calculateTotalPlaylistDurationForYears(const Node* head) {
 
     // Step 1: Traverse the linked list
     while (current) {
-        int year = extractYear(current->data.release_date); // Extract year from release_date
+        const int year = extractYear(current->data.release_date); // Extract year from release_date
         totalDuration += current->data.duration;            // Add song duration to total
 
         // Check if the current year already exists in `years` array
@@ -691,12 +704,12 @@ void calculateTotalPlaylistDurationForYears(const Node* head) {
         for (int j = 0; j < yearCount - i - 1; j++) {
             if (years[j] < years[j + 1]) {
                 // Swap years
-                int tempYear = years[j];
+                const int tempYear = years[j];
                 years[j] = years[j + 1];
                 years[j + 1] = tempYear;
 
                 // Swap durations
-                int tempDuration = durations[j];
+                const int tempDuration = durations[j];
                 durations[j] = durations[j + 1];
                 durations[j + 1] = tempDuration;
             }
@@ -712,9 +725,9 @@ void calculateTotalPlaylistDurationForYears(const Node* head) {
 
     for (int i = 0; i < yearCount; i++) {
         // Hours and minutes for the year
-        int hours = durations[i] / 3600;      // Convert seconds to hours
-        int minutes = (durations[i] % 3600) / 60;   // Remaining seconds converted to minutes
-        double percentage = (double)durations[i] / totalDuration * 100;
+        const int hours = durations[i] / 3600;      // Convert seconds to hours
+        const int minutes = (durations[i] % 3600) / 60;   // Remaining seconds converted to minutes
+        const double percentage = static_cast<double>(durations[i]) / totalDuration * 100;
 
         // Display year, duration in 'H:M' format, and percentage
         cout << setw(10) << years[i]
@@ -728,47 +741,73 @@ void calculateTotalPlaylistDurationForYears(const Node* head) {
     cout << "\nTotal Playlist Duration: " << totalHours << "h " << totalMinutes << "m\n";
 }
 
-void searchTotalSongByArtist(const Node* head) {
-    string artistName = "Aaron Johnson";
-
-    int totalSongs = 0; // Counter for the total number of rows with matching artist name
-
-    // Traverse the linked list
-    const Node* current = head;
-    bool headerDisplayed = false;
-
-    while (current) {
-        // Check if the artist name matches
-        if (current->data.artist == artistName) {
-            if (!headerDisplayed) {
-                // Display header before the first match
-                cout << "\nMatching Rows for Artist: " << artistName << endl;
-                displayPlaylistHeader(); // Function to display column headers (implement if needed)
-                headerDisplayed = true;
-            }
-            displayPlaylists(current, 1); // Function to display data of a single node
-            totalSongs++; // Increment the counter for each match
-        }
-        current = current->next; // Move to the next node
+void totalStreamsByLanguage(const Node* head) {
+    if (!head) {
+        cout << "No data found.\n";
+        return;
     }
 
-    // Display summary
-    if (totalSongs > 0) {
-        cout << "\nTotal Rows for Artist '" << artistName << "': " << totalSongs << endl;
-    } else {
-        cout << "\nNo rows found for artist: " << artistName << endl;
+    map<string, long long> languageStreams; // Map to store language and total streams
+
+    const Node* current = head;
+    while (current) {
+        const string& lang = current->data.language;
+        languageStreams[lang] += static_cast<long long>(current->data.stream);
+        current = current->next;
+    }
+
+    // Display the aggregated results
+    cout << "\nTotal Streams by Language:\n";
+    cout << left << setw(20) << "Language" << "Total Streams\n";
+    cout << string(40, '-') << endl;
+
+    for (const auto& [language, totalStreams] : languageStreams) {
+        cout << setw(20) << language << formatWithCommas(totalStreams) << endl;
     }
 }
 
+void searchTotalSongByArtist(const Node* head) {
+    const string artistNames[] = {
+        "Joseph Gibson", "Preston Watkins", "Elizabeth Ford", "Aaron Anderson", "Joe Melendez MD"
+    };
+    const int arraySize = size(artistNames);
 
+    // Traverse the linked list for each artist
+    for (int i = 0; i < arraySize; i++) {
+        const Node* current = head; // Reset current to the head of the list for each artist
+        int totalSongs = 0;         // Counter for the total number of rows with matching artist name
+        bool headerDisplayed = false;
 
-// NAQIB PART
+        while (current) {
+            // Check if the artist name matches
+            if (contains(artistNames[i], current->data.artist)) {
+                if (!headerDisplayed) {
+                    // Display header before the first match
+                    cout << "\nMatching Rows for Artist: " << artistNames[i] << endl;
+                    displayPlaylistHeader(); // Function to display column headers (if applicable)
+                    headerDisplayed = true;
+                }
+                displayPlaylists(current, 1); // Function to display data of a single node
+                totalSongs++; // Increment the counter for each match
+            }
+            current = current->next; // Move to the next node
+        }
+
+        // Display summary
+        if (totalSongs > 0) {
+            cout << "\nTotal Rows for Artist '" << artistNames[i] << "': " << totalSongs << endl;
+        } else {
+            cout << "\nNo rows found for artist: " << artistNames[i] << endl;
+        }
+    }
+}
+
 // Function placeholders for additional functions sub-functions
-void additionalFunctionsSubMenu(Node* head) {
+void additionalFunctionsSubMenu(const Node* head) {
     while (true) {
         cout << "\n========== Additional Functions Menu ==========\n";
         cout << "1. Calculate Total Playlist Duration Per Year\n"; // Placeholder for the first additional function
-        cout << "2. Additional Function 2\n"; // Placeholder for the second additional function
+        cout << "2. Aggregate Total Streams by Language\n"; // Placeholder for the second additional function
         cout << "3. Calculate Total Songs Sang by Artist\n"; // Placeholder for the second additional function
         cout << "4. Back to Main Menu\n";
         cout << "Enter your choice: ";
@@ -780,7 +819,7 @@ void additionalFunctionsSubMenu(Node* head) {
                 calculateTotalPlaylistDurationForYears(head);
             break;
             case 2:
-                cout << "Additional Function 2 selected. Functionality to be implemented.\n";
+                totalStreamsByLanguage(head);
                 break;
             case 3:
                 searchTotalSongByArtist(head);
@@ -803,9 +842,9 @@ void displayPlaylistHeader() {
         << setw(15) << "Release Date"
         << setw(10) << "Duration"
         << setw(15) << "Popularity"
-        << setw(10) << "Stream"
+        << setw(15) << "Stream"
         << setw(10) << "Language" << endl;
-    cout << string(185, '-') << endl;
+    cout << string(189, '-') << endl;
 }
 
 void displayPlaylists(const Node* head, const int limit = 100){
@@ -823,7 +862,7 @@ void displayPlaylists(const Node* head, const int limit = 100){
             << setw(15) << release_date
             << setw(10) << duration
             << setw(15) << popularity
-            << setw(10) << stream
+            << setw(15) << formatWithCommas(stream)
             << setw(10) << language << endl;
 
         current = current->next;
