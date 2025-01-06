@@ -766,7 +766,7 @@ void totalStreamsByLanguage(const Node* head) {
     }
 }
 
-void searchTotalSongByArtist(const Node* head) {
+void calculateTotalSongByArtist(const Node* head) {
     const string artistNames[] = {
         "Joseph Gibson", "Preston Watkins", "Elizabeth Ford", "Aaron Anderson", "Joe Melendez MD"
     };
@@ -822,7 +822,7 @@ void additionalFunctionsSubMenu(const Node* head) {
                 totalStreamsByLanguage(head);
                 break;
             case 3:
-                searchTotalSongByArtist(head);
+                calculateTotalSongByArtist(head);
                 break;
             case 4:
                 return; // Return to the main menu
