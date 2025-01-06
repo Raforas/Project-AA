@@ -3,11 +3,9 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
-#include <algorithm>
 #include <chrono>
+#include <algorithm>
 #include <functional> // for function
-#include <map>
-#include <utility>
 using namespace std;
 
 struct Playlist {
@@ -736,8 +734,8 @@ void calculateTotalPlaylistDurationForYears(const Node* head) {
     }
 
     // Step 4: Display Total Playlist Duration
-    int totalHours = totalDuration / 3600;         // Total seconds to hours
-    int totalMinutes = (totalDuration % 3600) / 60; // Remaining seconds to minutes
+    const int totalHours = totalDuration / 3600;         // Total seconds to hours
+    const int totalMinutes = (totalDuration % 3600) / 60; // Remaining seconds to minutes
     cout << "\nTotal Playlist Duration: " << totalHours << "h " << totalMinutes << "m\n";
 }
 
@@ -747,12 +745,33 @@ void totalStreamsByLanguage(const Node* head) {
         return;
     }
 
-    map<string, long long> languageStreams; // Map to store language and total streams
+    // Arrays to keep track of languages and their respective stream counts
+    string languages[100];       // Assuming at most 100 unique languages
+    long long streams[100] = {0};
+    int languageCount = 0;
 
     const Node* current = head;
     while (current) {
         const string& lang = current->data.language;
-        languageStreams[lang] += static_cast<long long>(current->data.stream);
+        const long long stream = current->data.stream;
+
+        // Check if the language already exists in the array
+        bool found = false;
+        for (int i = 0; i < languageCount; i++) {
+            if (languages[i] == lang) {
+                streams[i] += stream; // Add streams to the existing language
+                found = true;
+                break;
+            }
+        }
+
+        // If the language is not found, add it to the array
+        if (!found) {
+            languages[languageCount] = lang;
+            streams[languageCount] = stream;
+            languageCount++;
+        }
+
         current = current->next;
     }
 
@@ -761,8 +780,8 @@ void totalStreamsByLanguage(const Node* head) {
     cout << left << setw(20) << "Language" << "Total Streams\n";
     cout << string(40, '-') << endl;
 
-    for (const auto& [language, totalStreams] : languageStreams) {
-        cout << setw(20) << language << formatWithCommas(totalStreams) << endl;
+    for (int i = 0; i < languageCount; i++) {
+        cout << left << setw(20) << languages[i] << right << formatWithCommas(streams[i]) << endl;
     }
 }
 
@@ -770,7 +789,7 @@ void calculateTotalSongByArtist(const Node* head) {
     const string artistNames[] = {
         "Joseph Gibson", "Preston Watkins", "Elizabeth Ford", "Aaron Anderson", "Joe Melendez MD"
     };
-    const int arraySize = size(artistNames);
+    constexpr int arraySize = size(artistNames);
 
     // Traverse the linked list for each artist
     for (int i = 0; i < arraySize; i++) {
