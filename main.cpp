@@ -3,11 +3,9 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
-#include <algorithm>
 #include <chrono>
+#include <algorithm>
 #include <functional> // for function
-#include <map>
-#include <utility>
 using namespace std;
 
 struct Playlist {
@@ -338,6 +336,7 @@ Node* getMid(Node* start, const Node* end) {
     return slow;
 }
 
+static int totalFound = 0, totalNotFound = 0; // Static counters to track the results
 // Binary Search Implementation
 bool binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator,
                   const bool limitOutput, const int limit = 5) {
@@ -358,6 +357,7 @@ bool binarySearch(Node* head, const string& query, const function<int(const Play
             displayPlaylists(mid, 1); // Display the match
             matchFound = true;
             count++;
+            totalFound++;
 
             // Search for matches on the right side
             const Node* temp = mid->next;
@@ -391,6 +391,7 @@ bool binarySearch(Node* head, const string& query, const function<int(const Play
 
     if (!matchFound) {
         cout << "No match found for the query '" << query << "'.\n";
+        totalNotFound++;
         return false;
     }
 
@@ -459,10 +460,12 @@ bool ternarySearch(Node* head, const string& query, const function<int(const Pla
 
     if (count > 0) {
         matchFound = true;
+        totalFound++;
     }
 
     if (!matchFound) {
         cout << "No match found for the query '" << query << "'.\n";
+        totalNotFound++;
         return false;
     }
     return true;
@@ -515,6 +518,8 @@ void searchSubMenu(const Node* head) {
         algorithmName = (searchType == 1) ? "Binary Search" : "Ternary Search";
 
         Node* sortedHead = nullptr;
+        totalFound = 0; totalNotFound = 0;
+
         switch (choice) {
             case 1:
                 cout << "Search by Title selected.\n\n";
@@ -736,8 +741,8 @@ void calculateTotalPlaylistDurationForYears(const Node* head) {
     }
 
     // Step 4: Display Total Playlist Duration
-    int totalHours = totalDuration / 3600;         // Total seconds to hours
-    int totalMinutes = (totalDuration % 3600) / 60; // Remaining seconds to minutes
+    const int totalHours = totalDuration / 3600;         // Total seconds to hours
+    const int totalMinutes = (totalDuration % 3600) / 60; // Remaining seconds to minutes
     cout << "\nTotal Playlist Duration: " << totalHours << "h " << totalMinutes << "m\n";
 }
 
@@ -747,12 +752,33 @@ void totalStreamsByLanguage(const Node* head) {
         return;
     }
 
-    map<string, long long> languageStreams; // Map to store language and total streams
+    // Arrays to keep track of languages and their respective stream counts
+    string languages[100];       // Assuming at most 100 unique languages
+    long long streams[100] = {0};
+    int languageCount = 0;
 
     const Node* current = head;
     while (current) {
         const string& lang = current->data.language;
-        languageStreams[lang] += static_cast<long long>(current->data.stream);
+        const long long stream = current->data.stream;
+
+        // Check if the language already exists in the array
+        bool found = false;
+        for (int i = 0; i < languageCount; i++) {
+            if (languages[i] == lang) {
+                streams[i] += stream; // Add streams to the existing language
+                found = true;
+                break;
+            }
+        }
+
+        // If the language is not found, add it to the array
+        if (!found) {
+            languages[languageCount] = lang;
+            streams[languageCount] = stream;
+            languageCount++;
+        }
+
         current = current->next;
     }
 
@@ -761,8 +787,8 @@ void totalStreamsByLanguage(const Node* head) {
     cout << left << setw(20) << "Language" << "Total Streams\n";
     cout << string(40, '-') << endl;
 
-    for (const auto& [language, totalStreams] : languageStreams) {
-        cout << setw(20) << language << formatWithCommas(totalStreams) << endl;
+    for (int i = 0; i < languageCount; i++) {
+        cout << left << setw(20) << languages[i] << right << formatWithCommas(streams[i]) << endl;
     }
 }
 
@@ -770,7 +796,7 @@ void calculateTotalSongByArtist(const Node* head) {
     const string artistNames[] = {
         "Joseph Gibson", "Preston Watkins", "Elizabeth Ford", "Aaron Anderson", "Joe Melendez MD"
     };
-    const int arraySize = size(artistNames);
+    constexpr int arraySize = size(artistNames);
 
     // Traverse the linked list for each artist
     for (int i = 0; i < arraySize; i++) {
@@ -998,12 +1024,14 @@ void displaySortingResults(const string& algorithmName, const string& sortOrder,
 
 void displaySearchingResults(const string& algorithmName, const string& searchBy){// function to display searching results
     cout << "\n========== SEARCHING RESULTS ==========\n";
-    cout << "Algorithm    : " << algorithmName << endl;
-    cout << "Search by    : " << searchBy << endl;
+    cout << "Algorithm      : " << algorithmName << endl;
+    cout << "Search by      : " << searchBy << endl;
+    cout << "Total Found    : " << totalFound << endl;
+    cout << "Total Not Found: " << totalNotFound << endl;
     cout << "-------------------------------------\n";
-    cout << "Start Time   : " << globalStartTimeMs << " milliseconds\n";
-    cout << "End Time     : " << globalEndTimeMs << " milliseconds\n";
-    cout << "Elapsed Time : " << globalTotalMs << " milliseconds\n";
+    cout << "Start Time     : " << globalStartTimeMs << " milliseconds\n";
+    cout << "End Time       : " << globalEndTimeMs << " milliseconds\n";
+    cout << "Elapsed Time   : " << globalTotalMs << " milliseconds\n";
     cout << "=====================================\n";
 }
 
