@@ -846,20 +846,20 @@ void calculatePercentageByGenreAndLanguage(const Node* head) {
 
     // Display genre percentages
     cout << "\nPercentage by Genre:" << endl;
-    cout << setw(20) << left << "Genre" << setw(10) << "Percentage" << endl;
-    cout << string(30, '-') << endl;
+    cout << setw(20) << left << "Genre" << setw(10) << "Total" << setw(10) << "Percentage" << endl;
+    cout << string(42, '-') << endl;
     for (const auto& [genre, count] : genreCount) {
         double percentage = (static_cast<double>(count) / totalSongs) * 100;
-        cout << setw(20) << left << genre << setw(10) << fixed << setprecision(2) << percentage << "%" << endl;
+        cout << setw(20) << left << genre << setw(10) << fixed << setprecision(2) << count << setw(10) << fixed << setprecision(2) << percentage << "%" << endl;
     }
 
     // Display language percentages
     cout << "\nPercentage by Language:" << endl;
-    cout << setw(20) << left << "Language" << setw(10) << "Percentage" << endl;
-    cout << string(30, '-') << endl;
+    cout << setw(20) << left << "Language" << setw(10) << "Total" << setw(10) << "Percentage" << endl;
+    cout << string(42, '-') << endl;
     for (const auto& [language, count] : languageCount) {
         double percentage = (static_cast<double>(count) / totalSongs) * 100;
-        cout << setw(20) << left << language << setw(10) << fixed << setprecision(2) << percentage << "%" << endl;
+        cout << setw(20) << left << language << setw(10) << fixed << setprecision(2) << count << setw(10) << fixed << setprecision(2) << percentage << "%" << endl;
     }
 }
 
