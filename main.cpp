@@ -336,6 +336,7 @@ Node* getMid(Node* start, const Node* end) {
     return slow;
 }
 
+static int totalFound = 0, totalNotFound = 0; // Static counters to track the results
 // Binary Search Implementation
 bool binarySearch(Node* head, const string& query, const function<int(const Playlist&, const string&)>& comparator,
                   const bool limitOutput, const int limit = 5) {
@@ -356,6 +357,7 @@ bool binarySearch(Node* head, const string& query, const function<int(const Play
             displayPlaylists(mid, 1); // Display the match
             matchFound = true;
             count++;
+            totalFound++;
 
             // Search for matches on the right side
             const Node* temp = mid->next;
@@ -389,6 +391,7 @@ bool binarySearch(Node* head, const string& query, const function<int(const Play
 
     if (!matchFound) {
         cout << "No match found for the query '" << query << "'.\n";
+        totalNotFound++;
         return false;
     }
 
@@ -457,10 +460,12 @@ bool ternarySearch(Node* head, const string& query, const function<int(const Pla
 
     if (count > 0) {
         matchFound = true;
+        totalFound++;
     }
 
     if (!matchFound) {
         cout << "No match found for the query '" << query << "'.\n";
+        totalNotFound++;
         return false;
     }
     return true;
@@ -513,6 +518,8 @@ void searchSubMenu(const Node* head) {
         algorithmName = (searchType == 1) ? "Binary Search" : "Ternary Search";
 
         Node* sortedHead = nullptr;
+        totalFound = 0; totalNotFound = 0;
+
         switch (choice) {
             case 1:
                 cout << "Search by Title selected.\n\n";
@@ -1017,12 +1024,14 @@ void displaySortingResults(const string& algorithmName, const string& sortOrder,
 
 void displaySearchingResults(const string& algorithmName, const string& searchBy){// function to display searching results
     cout << "\n========== SEARCHING RESULTS ==========\n";
-    cout << "Algorithm    : " << algorithmName << endl;
-    cout << "Search by    : " << searchBy << endl;
+    cout << "Algorithm      : " << algorithmName << endl;
+    cout << "Search by      : " << searchBy << endl;
+    cout << "Total Found    : " << totalFound << endl;
+    cout << "Total Not Found: " << totalNotFound << endl;
     cout << "-------------------------------------\n";
-    cout << "Start Time   : " << globalStartTimeMs << " milliseconds\n";
-    cout << "End Time     : " << globalEndTimeMs << " milliseconds\n";
-    cout << "Elapsed Time : " << globalTotalMs << " milliseconds\n";
+    cout << "Start Time     : " << globalStartTimeMs << " milliseconds\n";
+    cout << "End Time       : " << globalEndTimeMs << " milliseconds\n";
+    cout << "Elapsed Time   : " << globalTotalMs << " milliseconds\n";
     cout << "=====================================\n";
 }
 
