@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
+#include <unordered_map>
 #include <chrono>
 #include <algorithm>
 #include <functional> // for function
@@ -828,13 +829,47 @@ void calculateTotalSongByArtist(const Node* head) {
     }
 }
 
+void calculatePercentageByGenreAndLanguage(const Node* head) {
+    unordered_map<string, int> genreCount;   // Map to store genre counts
+    unordered_map<string, int> languageCount; // Map to store language counts
+    int totalSongs = 0;                      // Total number of songs
+
+    // Traverse the linked list
+    const Node* current = head;
+    while (current) {
+        // Increment counts for genre and language
+        genreCount[current->data.genre]++;
+        languageCount[current->data.language]++;
+        totalSongs++; // Increment total song count
+        current = current->next;
+    }
+
+    // Display genre percentages
+    cout << "\nPercentage by Genre:" << endl;
+    cout << setw(20) << left << "Genre" << setw(10) << "Percentage" << endl;
+    cout << string(30, '-') << endl;
+    for (const auto& [genre, count] : genreCount) {
+        double percentage = (static_cast<double>(count) / totalSongs) * 100;
+        cout << setw(20) << left << genre << setw(10) << fixed << setprecision(2) << percentage << "%" << endl;
+    }
+
+    // Display language percentages
+    cout << "\nPercentage by Language:" << endl;
+    cout << setw(20) << left << "Language" << setw(10) << "Percentage" << endl;
+    cout << string(30, '-') << endl;
+    for (const auto& [language, count] : languageCount) {
+        double percentage = (static_cast<double>(count) / totalSongs) * 100;
+        cout << setw(20) << left << language << setw(10) << fixed << setprecision(2) << percentage << "%" << endl;
+    }
+}
+
 // Function placeholders for additional functions sub-functions
 void additionalFunctionsSubMenu(const Node* head) {
     while (true) {
         cout << "\n========== Additional Functions Menu ==========\n";
         cout << "1. Calculate Total Playlist Duration Per Year\n"; // Placeholder for the first additional function
         cout << "2. Aggregate Total Streams by Language\n"; // Placeholder for the second additional function
-        cout << "3. Calculate Total Songs Sang by Artist\n"; // Placeholder for the second additional function
+        cout << "3. Calculate Percentage of Genre and Language\n"; // Placeholder for the second additional function
         cout << "4. Back to Main Menu\n";
         cout << "Enter your choice: ";
         int choice;
@@ -848,7 +883,7 @@ void additionalFunctionsSubMenu(const Node* head) {
                 totalStreamsByLanguage(head);
                 break;
             case 3:
-                calculateTotalSongByArtist(head);
+                calculatePercentageByGenreAndLanguage(head);
                 break;
             case 4:
                 return; // Return to the main menu
