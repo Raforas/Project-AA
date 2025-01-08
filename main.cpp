@@ -73,6 +73,14 @@ string formatWithCommas(const long long number) {
     return numStr;
 }
 
+// Function to extract the year from a release date (YYYY-MM-DD)
+int extractYear(const string& release_date) {
+    if (release_date.length() >= 4) {
+        return stoi(release_date.substr(0, 4));  // First 4 chars are the year
+    }
+    return 0;  // Invalid date format
+}
+
 long long globalSwapCount = 0; // Global counter to track swaps during sorting
 long long globalTotalMs = 0; // Global variable to track sorting duration in milliseconds
 long long globalStartTimeMs = 0; // Global start time in milliseconds
@@ -662,14 +670,6 @@ void searchSubMenu(const Node* head) {
     }
 }
 
-// Function to extract the year from a release date (YYYY-MM-DD)
-int extractYear(const string& release_date) {
-    if (release_date.length() >= 4) {
-        return stoi(release_date.substr(0, 4));  // First 4 chars are the year
-    }
-    return 0;  // Invalid date format
-}
-
 // Function to calculate total playlist duration and display results
 void calculateTotalPlaylistDurationForYears(const Node* head) {
     constexpr int MAX_YEARS = 100;
@@ -757,11 +757,13 @@ void totalStreamsByLanguage(const Node* head) {
     string languages[100];       // Assuming at most 100 unique languages
     long long streams[100] = {0};
     int languageCount = 0;
+    long long totalStreams = 0;  // Total streams for all languages
 
     const Node* current = head;
     while (current) {
         const string& lang = current->data.language;
         const long long stream = current->data.stream;
+        totalStreams += stream; // Aggregate the total streams
 
         // Check if the language already exists in the array
         bool found = false;
@@ -785,12 +787,20 @@ void totalStreamsByLanguage(const Node* head) {
 
     // Display the aggregated results
     cout << "\nTotal Streams by Language:\n";
-    cout << left << setw(20) << "Language" << "Total Streams\n";
-    cout << string(40, '-') << endl;
+    cout << left << setw(20) << "Language" << setw(20) << "Total Streams" << "Percentage (%)\n";
+    cout << string(60, '-') << endl;
 
     for (int i = 0; i < languageCount; i++) {
-        cout << left << setw(20) << languages[i] << right << formatWithCommas(streams[i]) << endl;
+        double percentage = (static_cast<double>(streams[i]) / totalStreams) * 100; // Calculate percentage
+        cout << left << setw(20) << languages[i]
+             << setw(20) << formatWithCommas(streams[i])
+             << fixed << setprecision(2) << percentage << "%\n";
     }
+
+    // Display the total streams for all languages
+    cout << string(60, '-') << endl;
+    cout << left << setw(20) << "Total"
+         << setw(20) << formatWithCommas(totalStreams) << "100.00%\n";
 }
 
 void calculateTotalSongByArtist(const Node* head) {
@@ -849,7 +859,7 @@ void calculatePercentageByGenreAndLanguage(const Node* head) {
     cout << setw(20) << left << "Genre" << setw(10) << "Total" << setw(10) << "Percentage" << endl;
     cout << string(42, '-') << endl;
     for (const auto& [genre, count] : genreCount) {
-        double percentage = (static_cast<double>(count) / totalSongs) * 100;
+        const double percentage = (static_cast<double>(count) / totalSongs) * 100;
         cout << setw(20) << left << genre << setw(10) << fixed << setprecision(2) << count << setw(10) << fixed << setprecision(2) << percentage << "%" << endl;
     }
 
@@ -858,7 +868,7 @@ void calculatePercentageByGenreAndLanguage(const Node* head) {
     cout << setw(20) << left << "Language" << setw(10) << "Total" << setw(10) << "Percentage" << endl;
     cout << string(42, '-') << endl;
     for (const auto& [language, count] : languageCount) {
-        double percentage = (static_cast<double>(count) / totalSongs) * 100;
+        const double percentage = (static_cast<double>(count) / totalSongs) * 100;
         cout << setw(20) << left << language << setw(10) << fixed << setprecision(2) << count << setw(10) << fixed << setprecision(2) << percentage << "%" << endl;
     }
 }
